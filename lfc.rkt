@@ -36,6 +36,7 @@
 {define-syntax define/memroize%help%ref
   {syntax-rules ()
     [(_ h () v) (hash-ref! h '() {λ () v})]
+    [(_ h (x) v) (hash-ref! h x {λ () v})]
     [(_ h (x . xs) v) (define/memroize%help%ref (hash-ref! h x make-hash) xs v)]}}
 
 {struct Id ([String : String])}
@@ -67,6 +68,7 @@
    )}
 
 {define-data Type
+  (TypeVoid)
   (TypeF [String : String])
   (TypeStruct [String : String])
   (TypeUnion [String : String])
@@ -74,4 +76,13 @@
   (TypeRef [Type : Type])
   }
 
-{define-type Macro (U)} ; WIP
+{struct Macro ()} ; WIP
+
+{: compile (-> (Map Id Type) (Map Id (U Val Macro)) Expr Val)}
+{define (compile type-env env x)
+  {match x
+    [(? symbol? x) (make-c-id x)]
+    [_ (raise 'WIP)]}}
+
+{: make-c-id (-> Symbol Id)}
+{define/memroize (make-c-id s) (Id (symbol->string s))} ; WIP
