@@ -72,6 +72,9 @@
     [(? symbol? x)
      {define r (make-c-id x)}
      (Val (ValLeftValue r '()) (ValValue r '()) (ValType (TypeF r) '()) #f)]
+    [(list '! f x ...)
+     {define m (hash-ref env f)}
+     (assert (Macro? m) (raise 'WIP))]
     [_ (raise 'WIP)]}}
 
 {: make-c-id (-> Symbol Id)}
