@@ -64,7 +64,7 @@
   (TypeRef [Type : Type])
   }
 
-{struct Macro ()} ; WIP
+{struct Macro ([f : (-> (Listof Val) Val)])}
 
 {: compile (-> (Map Id Type) (Map Id (U Val Macro)) Expr Val)}
 {define (compile type-env env x)
@@ -72,9 +72,9 @@
     [(? symbol? x)
      {define r (make-c-id x)}
      (Val (ValLeftValue r '()) (ValValue r '()) (ValType (TypeF r) '()) #f)]
-    [(list '! f x ...)
-     {define m (hash-ref env f)}
-     (assert (Macro? m) (raise 'WIP))]
+    [`(! ,f ,@xs)
+     {match (hash-ref env f)
+       [(Macro f) (f xs)]}]
     [_ (raise 'WIP)]}}
 
 {: make-c-id (-> Symbol Id)}
