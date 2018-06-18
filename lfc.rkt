@@ -29,7 +29,7 @@
 
 {struct Id ([String : String])}
 
-{struct Val ([ValLeft : (Maybe Left)] [ValValue : (Maybe ValValue)] [ValType : (Maybe ValType)] [ValFunc : (Maybe ValFunc)])}
+{struct Val ([ValLeft : (Maybe ValLeftValue)] [ValValue : (Maybe ValValue)] [ValType : (Maybe ValType)] [ValFunc : (Maybe ValFunc)])}
 {struct ValValue ([ValValueValue : ValValueValue] [Lines : Lines])}
 {define-type ValValueValue (U Id)} ; WIP
 {struct ValType ([Type : Type] [Lines : Lines])}
@@ -57,9 +57,9 @@
 
 {define-data Type
   (TypeVoid)
-  (TypeF [String : String])
-  (TypeStruct [String : String])
-  (TypeUnion [String : String])
+  (TypeF [Id : Id])
+  (TypeStruct [Id : Id])
+  (TypeUnion [Id : Id])
   (TypeArrow [args : (Listof Type)] [result : Type])
   (TypeRef [Type : Type])
   }
@@ -69,7 +69,9 @@
 {: compile (-> (Map Id Type) (Map Id (U Val Macro)) Expr Val)}
 {define (compile type-env env x)
   {match x
-    [(? symbol? x) (Val (make-c-id x) #f #f #f)]
+    [(? symbol? x)
+     {define r (make-c-id x)}
+     (Val (ValLeftValue r '()) (ValValue r '()) (ValType (TypeF r) '()) #f)]
     [_ (raise 'WIP)]}}
 
 {: make-c-id (-> Symbol Id)}
