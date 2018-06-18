@@ -13,7 +13,7 @@
 ;
 ;    You should have received a copy of the GNU Affero General Public License
 ;    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#lang typed/racket
+#lang typed/racket #:with-refinements
 {define-syntax define-data
   {syntax-rules ()
     [(_ (t c ...) (ons f ...) ...)
@@ -25,6 +25,11 @@
        {struct ons (f ...)} ...
        {define-type t (U ons ...)}}]}}
 {define-type (Maybe a) (U a False)}
+{define-type (Map k v) (Immutable-HashTable k v)}
+
+{define (any? x) #t}
+{define-syntax-rule {is? x t}
+  {with-handlers ([any? (λ (e) #f)]) {cast x t} #t}}
 
 {struct Var ([String : String])}
 
@@ -43,3 +48,17 @@
 {struct Set! ([Var : Var] [EvaledVal : EvaledVal])}
 {struct GlobalTypedef ([Var : Var] [ValTypeValue : ValTypeValue])}
 {struct GlobalTypedefArrow ([Var : Var] [ValTypeValues : (Listof ValTypeValue)] [ValTypeValue : ValTypeValue])}
+
+{define-type Expr
+  (U
+   (Refine [s : Symbol] (not (: s '!)))
+   (Pairof Expr (Listof Expr))
+   (Pairof '! (Pairof Expr (Listof Expr))) ; {m x ...}
+   )}
+
+{define-type Type (U)} ; WIP
+{define-type Macro (U)} ; WIP
+
+{: compile (-> (Map Var (U Type Val Macro)) Expr Val)}
+{define (compile env x)
+  (raise 'WIP)}
