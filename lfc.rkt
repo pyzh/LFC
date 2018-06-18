@@ -49,11 +49,15 @@
 
 {define-type Lines (Listof Line)}
 {define-data Line
-  (Def [Id : Id] [Val : Val])
   (DefVar [Id : Id] [Val : Val])
-  (Set! [Id : Id] [Val : Val])
+  (DefVarEmpty [Id : Id])
+  (Set! [Left : Left] [Val : Val])
   (DefStruct [Id : Id] [List : (Listof (Pairof Type Id))])
   }
+
+{struct (X) Dot ([x : X] [y : Id])}
+{define-type Left (U Id (Dot Left))} ; WIP
+
 
 {define-type Expr
   (U
