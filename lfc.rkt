@@ -33,7 +33,7 @@
 {struct ValValue ([ValValueValue : ValValueValue] [Lines : Lines])}
 {define-type ValValueValue (U Id)} ; WIP
 {struct ValType ([Type : Type] [Lines : Lines])}
-{struct ValFunc ()} ; WIP
+{struct ValFunc ([f : (-> (Listof Val) Val)])}
 {struct ValLeftValue ([Left : Left] [Lines : Lines])} ; WIP
 
 {define-type Lines (Listof Line)}
@@ -64,7 +64,7 @@
   (TypeRef [Type : Type])
   }
 
-{struct Macro ([f : (-> (Listof Val) Val)])}
+{struct Macro ([f : (-> (Listof Expr) Val)])}
 
 {: compile (-> (Map Id Type) (Map Id (U Val Macro)) Expr Val)}
 {define (compile type-env env x)
@@ -75,6 +75,9 @@
     [`(! ,f ,@xs)
      {match (hash-ref env f)
        [(Macro f) (f xs)]}]
+    [`(,f ,@xs)
+     {match (hash-ref env f)
+       [(Val _ _ _ (ValFunc f)) (f (map {λ (x) (compile type-env env x)} xs))]}]
     [_ (raise 'WIP)]}}
 
 {: make-c-id (-> Symbol Id)}
