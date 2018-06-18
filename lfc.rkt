@@ -55,9 +55,9 @@
   (DefStruct [Id : Id] [List : (Listof (Pairof Type Id))])
   }
 
-{struct (X) Dot ([x : X] [y : Id])}
-{define-type Left (U Id (Dot Left))} ; WIP
-
+{struct Dot ([x : Val] [y : Id])}
+{struct RefRead ([x : Val])}
+{define-type Left (U Id Dot RefRead)} ; WIP
 
 {define-type Expr
   (U
@@ -70,6 +70,8 @@
   (TypeF [String : String])
   (TypeStruct [String : String])
   (TypeUnion [String : String])
-  (TypeArrow [args : (Listof Type)] [result : Type])}
+  (TypeArrow [args : (Listof Type)] [result : Type])
+  (TypeRef [Type : Type])
+  }
 
 {define-type Macro (U)} ; WIP
