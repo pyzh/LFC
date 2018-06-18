@@ -26,27 +26,15 @@
        {define-type t (U ons ...)}}]}}
 {define-type (Maybe a) (U a False)}
 {define-type (Map k v) (Immutable-HashTable k v)}
-;{define (any? x) #t}
-;{define-syntax-rule {is? x t}
-;  {with-handlers ([any? (λ (e) #f)]) {cast x t} #t}}
-{define-syntax-rule {define/memroize (f x ...) v ...}
-  {define f
-    {let ([h (make-hash)])
-      (define/memroize%help%ref h (x ...) {begin v ...})}}}
-{define-syntax define/memroize%help%ref
-  {syntax-rules ()
-    [(_ h () v) (hash-ref! h '() {λ () v})]
-    [(_ h (x) v) (hash-ref! h x {λ () v})]
-    [(_ h (x . xs) v) (define/memroize%help%ref (hash-ref! h x make-hash) xs v)]}}
 
 {struct Id ([String : String])}
 
-{struct Val ([ValLeft : (Maybe ValLeftValue)] [ValValue : (Maybe ValValue)] [ValType : (Maybe ValType)] [ValFunc : (Maybe ValFunc)])}
+{struct Val ([ValLeft : (Maybe Left)] [ValValue : (Maybe ValValue)] [ValType : (Maybe ValType)] [ValFunc : (Maybe ValFunc)])}
 {struct ValValue ([ValValueValue : ValValueValue] [Lines : Lines])}
 {define-type ValValueValue (U Id)} ; WIP
 {struct ValType ([Type : Type] [Lines : Lines])}
 {struct ValFunc ()} ; WIP
-{struct ValLeftValue ()} ; WIP
+{struct ValLeftValue ([Left : Left] [Lines : Lines])} ; WIP
 
 {define-type Lines (Listof Line)}
 {define-data Line
@@ -81,8 +69,8 @@
 {: compile (-> (Map Id Type) (Map Id (U Val Macro)) Expr Val)}
 {define (compile type-env env x)
   {match x
-    [(? symbol? x) (make-c-id x)]
+    [(? symbol? x) (Val (make-c-id x) #f #f #f)]
     [_ (raise 'WIP)]}}
 
 {: make-c-id (-> Symbol Id)}
-{define/memroize (make-c-id s) (Id (symbol->string s))} ; WIP
+{define (make-c-id s) (Id (symbol->string s))} ; WIP
