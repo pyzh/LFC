@@ -26,10 +26,17 @@
        {define-type t (U ons ...)}}]}}
 {define-type (Maybe a) (U a False)}
 {define-type (Map k v) (Immutable-HashTable k v)}
-
 ;{define (any? x) #t}
 ;{define-syntax-rule {is? x t}
 ;  {with-handlers ([any? (λ (e) #f)]) {cast x t} #t}}
+{define-syntax-rule {define/memroize (f x ...) v ...}
+  {define f
+    {let ([h (make-hash)])
+      (define/memroize%help%ref h (x ...) {begin v ...})}}}
+{define-syntax define/memroize%help%ref
+  {syntax-rules ()
+    [(_ h () v) (hash-ref! h '() {λ () v})]
+    [(_ h (x . xs) v) (define/memroize%help%ref (hash-ref! h x make-hash) xs v)]}}
 
 {struct Var ([String : String])}
 
