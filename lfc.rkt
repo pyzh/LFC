@@ -72,12 +72,8 @@
     [(? symbol? x)
      {define r (make-c-id x)}
      (Val (ValLeftValue r '()) (ValValue r '()) (ValType (TypeF r) '()) #f)]
-    [`(! ,f ,@xs)
-     {match (hash-ref env f)
-       [(Macro f) (f xs)]}]
-    [`(,f ,@xs)
-     {match (hash-ref env f)
-       [(Val _ _ _ (ValFunc f)) (f (map {λ (x) (compile type-env env x)} xs))]}]
+    [`(! ,f ,@xs) ((Macro-f (hash-ref env f)) xs)]
+    [`(,f ,@xs) ((ValFunc-f (Val-ValFunc (hash-ref env f))) (map {λ (x) (compile type-env env x)} xs))]
     [_ (raise 'WIP)]}}
 
 {: make-c-id (-> Symbol Id)}
