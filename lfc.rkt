@@ -38,23 +38,22 @@
     [(_ h () v) (hash-ref! h '() {λ () v})]
     [(_ h (x . xs) v) (define/memroize%help%ref (hash-ref! h x make-hash) xs v)]}}
 
-{struct Var ([String : String])}
+{struct Id ([String : String])}
 
-{struct Val ([ValValue : (Maybe ValValue)] [ValType : (Maybe ValType)] [ValFunc : (Maybe ValFunc)])}
+{struct Val ([ValLeft : (Maybe ValLeftValue)] [ValValue : (Maybe ValValue)] [ValType : (Maybe ValType)] [ValFunc : (Maybe ValFunc)])}
 {struct ValValue ([ValValueValue : ValValueValue] [Lines : Lines])}
-{define-type ValValueValue (U Var)} ; WIP
-{struct ValType ([ValTypeValue : ValTypeValue] [Lines : Lines])}
-{define-type ValTypeValue (U Var)} ; WIP
+{define-type ValValueValue (U Id)} ; WIP
+{struct ValType ([Type : Type] [Lines : Lines])}
 {struct ValFunc ()} ; WIP
-
-{struct EvaledVal ([ValValueValue : (Maybe ValValueValue)] [ValTypeValue : ValTypeValue] [ValFunc : (Maybe ValFunc)])}
+{struct ValLeftValue ()} ; WIP
 
 {define-type Lines (Listof Line)}
-{define-type Line (U Define Set!)}
-{struct Define ([Var : Var] [EvaledVal : EvaledVal])}
-{struct Set! ([Var : Var] [EvaledVal : EvaledVal])}
-{struct GlobalTypedef ([Var : Var] [ValTypeValue : ValTypeValue])}
-{struct GlobalTypedefArrow ([Var : Var] [ValTypeValues : (Listof ValTypeValue)] [ValTypeValue : ValTypeValue])}
+{define-data Line
+  (Def [Id : Id] [Val : Val])
+  (DefVar [Id : Id] [Val : Val])
+  (Set! [Id : Id] [Val : Val])
+  (DefStruct [Id : Id] [List : (Listof (Pairof Type Id))])
+  }
 
 {define-type Expr
   (U
@@ -63,12 +62,10 @@
    (Pairof '! (Pairof Expr (Listof Expr))) ; {m x ...}
    )}
 
-{define-type Type (U)} ; WIP
-{define-type Macro (U)} ; WIP
+{define-data Type
+  (TypeF [String : String])
+  (TypeStruct [String : String])
+  (TypeUnion [String : String])
+  (TypeArrow [args : (Listof Type)] [result : Type])}
 
-{: compile (-> (Map Var (U (Pairof 't Type) (Pairof 'v Val) (Pairof 'm Macro))) Expr Val)}
-{define (compile env x)
-  {match x
-    [(? symbol? x) (assert {let ([s (symbol->string x)]) (and (c-id? x) (Var x))})]
-    [_ (raise 'WIP)]}}
-{define (c-id? x) (raise 'WIP)}
+{define-type Macro (U)} ; WIP
