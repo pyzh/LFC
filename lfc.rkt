@@ -27,9 +27,9 @@
 {define-type (Maybe a) (U a False)}
 {define-type (Map k v) (Immutable-HashTable k v)}
 
-{define (any? x) #t}
-{define-syntax-rule {is? x t}
-  {with-handlers ([any? (λ (e) #f)]) {cast x t} #t}}
+;{define (any? x) #t}
+;{define-syntax-rule {is? x t}
+;  {with-handlers ([any? (λ (e) #f)]) {cast x t} #t}}
 
 {struct Var ([String : String])}
 
@@ -59,6 +59,9 @@
 {define-type Type (U)} ; WIP
 {define-type Macro (U)} ; WIP
 
-{: compile (-> (Map Var (U Type Val Macro)) Expr Val)}
+{: compile (-> (Map Var (U (Pairof 't Type) (Pairof 'v Val) (Pairof 'm Macro))) Expr Val)}
 {define (compile env x)
-  (raise 'WIP)}
+  {match x
+    [(? symbol? x) (assert {let ([s (symbol->string x)]) (and (c-id? x) (Var x))})]
+    [_ (raise 'WIP)]}}
+{define (c-id? x) (raise 'WIP)}
