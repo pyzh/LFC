@@ -38,17 +38,17 @@
   (VarSet! [Left : Left] [Value : Value])
   (DefFuncGlobal [IdU : IdU] [Func : Func])
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
+{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
 
 {define-data Type
   (TypeArrow [args : (Listof Type)] [result : Type])
   (TypeIdC [IdC : IdC])
   (TypeStruct [IdU : IdU])}
 
-{define-type Value (U Left Apply Func (Pairof Value (Listof Line)))}
+{define-type Value (U Left Apply (Pairof Value (Listof Line)))}
 {define-type Left (U IdU Dot (Pairof Left (Listof Line)))}
 {struct Apply ([f : Value] [Values : (Listof Value)]) #:transparent}
 {struct Dot ([Value : Value] [IdU : IdU]) #:transparent}
-{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
 
 {define alphabet (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"))}
 {define alphabetdi (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"))}
@@ -125,11 +125,6 @@
         (apply string-append (localdeclsS f) (map localdeclsS xs))
         (apply string-append (localS f) (map localS xs))
         (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
-    [(Func? v)
-     {let ([args (map {λ ([x : (Pairof Type Id)])
-                        (cons (typedefs-Type->type m (car x))
-                              (cdr x))} (Func-args v))])
-       (raise 'WIP)}]
     [(pair? v) (raise 'WIP)]
     [else (raise 'WIP)]}}
 
