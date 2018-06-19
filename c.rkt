@@ -18,19 +18,20 @@
   {syntax-rules ()
     [(_ (t c ...) (ons f ...) ...)
      {begin
-       {struct (c ...) ons (f ...)} ...
+       {struct (c ...) ons (f ...) #:transparent} ...
        {define-type (t c ...) (U (ons c ...) ...)}}]
     [(_ t (ons f ...) ...)
      {begin
-       {struct ons (f ...)} ...
+       {struct ons (f ...) #:transparent} ...
        {define-type t (U ons ...)}}]}}
 {define-type (Maybe a) (U a False)}
 {define-type (Map k v) (Immutable-HashTable k v)}
 
-{struct Id ([addr : (Listof Natural)] [Symbol : Symbol])}
-{struct CId ([String : String])}
+{struct Id ([addr : (Listof Natural)] [Symbol : Symbol]) #:transparent}
+{struct CId ([String : String]) #:transparent}
 
 {define-data Line
+  (Return [Value : Value])
   (Block [Lines : (Listof Line)])
   (DefVar [Id : Id] [Value : Value])
   (VarSet! [Left : Left] [Value : Value])
@@ -41,11 +42,12 @@
   (TypeStruct [Id : Id])
   (TypeFStruct [CId : CId])}
 
-{define-type Value (U Left Apply)}
+{define-type Value (U Left Apply Function)}
 {define-type Left (U Id CId Dot DotF)}
-{struct Apply ([f : Value] [List : (Listof Value)])}
-{struct Dot ([x : Value] [f : Id])}
-{struct DotF ([x : Value] [f : CId])}
+{struct Apply ([f : Value] [List : (Listof Value)]) #:transparent}
+{struct Dot ([x : Value] [f : Id]) #:transparent}
+{struct DotF ([x : Value] [f : CId]) #:transparent}
+{struct Function ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
 
 {define alphabet (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"))}
 {define alphabetdi (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"))}
@@ -56,7 +58,7 @@
           (if (null? xs)
               (string->list (apply string-append (add-between (cons "_LFC" (map {λ (x) (number->string x)} (Id-addr x))) "_")))
               {let ([x (car xs)] [xs (cdr xs)])
-                (case s
+                {case s
                   [(h)
                    (if (set-member? alphabet x)
                            (cons x (loop xs 'm))
@@ -68,5 +70,18 @@
                   [(b)
                    (if (set-member? alphabetdi x)
                        (cons #\_ (cons x (loop xs 'm)))
-                       (loop xs 'b))])})}))}
-                       
+                       (loop xs 'b))]}})}))}
+
+{: Line->global-main-local (-> Line (List String String String))}
+{define (Line->global-main-local l)
+  {cond
+    [(Block? l)
+     {let ([xs (map Line->global-main-local (Block-Lines l))])
+       (list (apply string-append (map {ann first (-> (List String String String) String)} xs))
+             (apply string-append (map {ann second (-> (List String String String) String)} xs))
+             (apply string-append (map {ann third (-> (List String String String) String)} xs)))}]
+    [(DefVar? l) (raise 'WIP)]
+    [else (raise 'WIP)]}}
+
+{: Value->global-main-local-value (-> Value (List String String String String))}
+{define (Value->global-main-local-value v) (raise 'WIP)}
