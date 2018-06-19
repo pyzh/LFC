@@ -39,7 +39,7 @@
 
 {define-data Type
   (TypeArrow [args : (Listof Type)] [result : Type])
-  (TypeC [IdC : IdC])
+  (TypeIdC [IdC : IdC])
   (TypeStruct [Id : Id])
   (TypeCStruct [IdC : IdC])}
 
@@ -136,8 +136,10 @@
 {: typedefs-Type->type
    (-> typedefs Type String)}
 {define (typedefs-Type->type m t)
-  (third (hash-ref!
+  (third
+   (hash-ref!
    m t
    {λ ()
      {cond
+       [(TypeIdC? t) (list "" "" (IdC-String (TypeIdC-IdC t)))]
        [else (raise 'WIP)]}}))}
