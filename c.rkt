@@ -125,7 +125,11 @@
         (apply string-append (localdeclsS f) (map localdeclsS xs))
         (apply string-append (localS f) (map localS xs))
         (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
-    [(Function? v) (raise 'WIP)]
+    [(Function? v)
+     {let ([args (map {λ ([x : (Pairof Type Id)])
+                        (cons (typedefs-Type->decls-global-main-localdecls-local-value m (car x))
+                              (cdr x))} (Function-args v))])
+       (raise 'WIP)}]
     [(pair? v) (raise 'WIP)]
     [else (raise '0%)]}}
 
