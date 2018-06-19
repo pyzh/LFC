@@ -42,8 +42,7 @@
 {define-data Type
   (TypeArrow [args : (Listof Type)] [result : Type])
   (TypeIdC [IdC : IdC])
-  (TypeStruct [Id : Id])
-  (TypeStructC [IdC : IdC])}
+  (TypeStruct [IdU : IdU])}
 
 {define-type Value (U Left Apply Func (Pairof Value (Listof Line)))}
 {define-type Left (U IdU Dot (Pairof Left (Listof Line)))}
@@ -143,8 +142,9 @@
     {λ ()
       {cond
         [(TypeIdC? t) (cons '() (IdC-String (TypeIdC-IdC t)))]
-        [(TypeStruct? t) (cons '() (string-append "struct "(Id-String (TypeStruct-Id t))))]
-        [(TypeStructC? t) (cons '() (string-append "struct "(IdC-String (TypeStructC-IdC t))))]
+        [(TypeStruct? t)
+         {let ([a (string-append "struct "(IdU-String (TypeStruct-IdU t)))])
+           (cons `(,(string-append a";")) a)}]
         [(TypeArrow? t)
          (typedefs-Type->type m (TypeArrow-result t))
          {let ([args (map {λ ([x : Type]) (typedefs-Type->type m x) (hash-ref m x)} (TypeArrow-args t))]
