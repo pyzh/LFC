@@ -77,8 +77,6 @@
 {define declsS first}
 {: globalS (-> (Listof String) String)}
 {define globalS second}
-{: typeS (-> (Listof String) String)}
-{define typeS third}
 {: mainS (-> (Listof String) String)}
 {define mainS third}
 {: localdeclsS (-> (Listof String) String)}
@@ -88,8 +86,10 @@
 {: valueS (-> (Listof String) String)}
 {define valueS sixth}
 
+{define-type typedefs (Mutable-HashTable Type (List String String String))} ; decl / define / type
+
 {: typedefs-Line->decls-global-main-localdecls-local
-   (-> (Mutable-HashTable Type String) Line (List String String String String String))}
+   (-> typedefs Line (List String String String String String))}
 {define (typedefs-Line->decls-global-main-localdecls-local m l)
   {cond
     [(Block? l)
@@ -104,7 +104,7 @@
     [else (raise 'WIP)]}}
 
 {: typedefs-Value->decls-global-main-localdecls-local-value
-   (-> (Mutable-HashTable Type String) Value (List String String String String String String))}
+   (-> typedefs Value (List String String String String String String))}
 {define (typedefs-Value->decls-global-main-localdecls-local-value m v)
   {cond
     [(Id? v) (list "" "" "" "" "" (Id-String v))]
@@ -127,14 +127,17 @@
         (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
     [(Function? v)
      {let ([args (map {λ ([x : (Pairof Type Id)])
-                        (cons (typedefs-Type->decls-global-type m (car x))
+                        (cons (typedefs-Type->type m (car x))
                               (cdr x))} (Function-args v))])
        (raise 'WIP)}]
     [(pair? v) (raise 'WIP)]
     [else (raise '0%)]}}
 
-{: typedefs-Type->decls-global-type
-   (-> (Mutable-HashTable Type String) Type (List String String String))}
-{define (typedefs-Type->decls-global-type m t)
-  {cond
-    [else (raise 'WIP)]}}
+{: typedefs-Type->type
+   (-> typedefs Type String)}
+{define (typedefs-Type->type m t)
+  (third (hash-ref!
+   m t
+   {λ ()
+     {cond
+       [else (raise 'WIP)]}}))}
