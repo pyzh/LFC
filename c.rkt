@@ -39,21 +39,21 @@
 
 {define-data Type
   (TypeArrow [args : (Listof Type)] [result : Type])
-  (TypeC [CId : IdC])
+  (TypeC [IdC : IdC])
   (TypeStruct [Id : Id])
-  (TypeCStruct [CId : IdC])}
+  (TypeCStruct [IdC : IdC])}
 
 {define-type Value (U Left Apply Function (Pairof Value (Listof Line)))}
 {define-type Left (U Id IdC Dot DotC (Pairof Left (Listof Line)))}
 {struct Apply ([f : Value] [Values : (Listof Value)]) #:transparent}
 {struct Dot ([Value : Value] [Id : Id]) #:transparent}
-{struct DotC ([Value : Value] [CId : IdC]) #:transparent}
+{struct DotC ([Value : Value] [IdC : IdC]) #:transparent}
 {struct Function ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
 
 {define alphabet (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"))}
 {define alphabetdi (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"))}
-(: Id->CId (-> Id IdC))
-{define (Id->CId x) (IdC (Id-String x))}
+(: Id->IdC (-> Id IdC))
+{define (Id->IdC x) (IdC (Id-String x))}
 {: Id-String (-> Id String)}
 {define (Id-String x)
   (string-append
@@ -114,7 +114,7 @@
        (list (declsS x) (globalS x) (mainS x) (localdeclsS x) (localS x) (string-append "("(valueS x)")."(Id-String (Dot-Id v))))}]
     [(DotC? v)
      {let ([x (typedefs-Value->decls-global-main-localdecls-local-value m (DotC-Value v))])
-       (list (declsS x) (globalS x) (mainS x) (localdeclsS x) (localS x) (string-append "("(valueS x)")."(IdC-String (DotC-CId v))))}]
+       (list (declsS x) (globalS x) (mainS x) (localdeclsS x) (localS x) (string-append "("(valueS x)")."(IdC-String (DotC-IdC v))))}]
     [(Apply? v)
      {let ([f (typedefs-Value->decls-global-main-localdecls-local-value m (Apply-f v))]
            [xs (map {λ ([x : Value]) (typedefs-Value->decls-global-main-localdecls-local-value m x)} (Apply-Values v))])
