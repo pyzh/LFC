@@ -26,6 +26,8 @@
        {define-type t (U ons ...)}}]}}
 {define-type (Maybe a) (U a False)}
 {define-type (Map k v) (Immutable-HashTable k v)}
+{: string-add-between (-> (Listof String) String String)}
+{define (string-add-between xs a) (apply string-append (add-between xs a))}
 
 {struct Id ([addr : (Listof String)] [Symbol : Symbol]) #:transparent}
 {struct IdC ([String : String]) #:transparent}
@@ -116,11 +118,16 @@
         (apply string-append (map localS xs)))}]
     [(DefVar? l) (raise 'WIP)]
     [(DefFuncGlobal? l)
-     {let ([f (DefFuncGlobal-Func l)])
+     {let ([f (DefFuncGlobal-Func l)] [n (IdU-String (DefFuncGlobal-IdU l))])
      {let ([args (map {λ ([x : (Pairof Type Id)]) (cons (typedefs-Type->type m (car x)) (cdr x))} (Func-args f))]
            [result (typedefs-Type->type m (Func-result f))]
            [ls (typedefs-Lines->decls-global-main-localdecls-local m (Func-Lines f))])
-       (raise 'WIP)}}]
+       (list
+        (string-append (declsS ls) result" "n"("(string-add-between (map {ann car (-> (Pairof String Id) String)} args) ",")");")
+        (globalS ls) ;WIP
+        (mainS ls)
+        ""
+        "")}}]
     [else (raise 'WIP)]}}
 
 {: typedefs-Value->decls-global-main-localdecls-local-value
@@ -141,7 +148,7 @@
         (apply string-append (mainS f) (map mainS xs))
         (apply string-append (localdeclsS f) (map localdeclsS xs))
         (apply string-append (localS f) (map localS xs))
-        (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
+        (string-append "("(valueS f)")("(string-add-between (map valueS xs) ",")")"))}]
     [(pair? v) (raise 'WIP)]
     [else (raise 'WIP)]}}
 
