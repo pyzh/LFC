@@ -28,7 +28,7 @@
 {define-type (Map k v) (Immutable-HashTable k v)}
 
 {struct Id ([addr : (Listof Natural)] [Symbol : Symbol]) #:transparent}
-{struct CId ([String : String]) #:transparent}
+{struct IdC ([String : String]) #:transparent}
 
 {define-data Line
   (Return [Value : Value])
@@ -38,21 +38,21 @@
   (DefStruct [Id : Id] [List : (Listof (Pairof Type Id))])}
 
 {define-data Type
-  (TypeC [CId : CId])
+  (TypeC [CId : IdC])
   (TypeStruct [Id : Id])
-  (TypeCStruct [CId : CId])}
+  (TypeCStruct [CId : IdC])}
 
 {define-type Value (U Left Apply Function (Pairof Value (Listof Line)))}
-{define-type Left (U Id CId Dot DotC (Pairof Left (Listof Line)))}
+{define-type Left (U Id IdC Dot DotC (Pairof Left (Listof Line)))}
 {struct Apply ([f : Value] [List : (Listof Value)]) #:transparent}
 {struct Dot ([Value : Value] [Id : Id]) #:transparent}
-{struct DotC ([Value : Value] [CId : CId]) #:transparent}
+{struct DotC ([Value : Value] [CId : IdC]) #:transparent}
 {struct Function ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
 
 {define alphabet (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"))}
 {define alphabetdi (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"))}
-(: Id->CId (-> Id CId))
-{define (Id->CId x) (CId (Id-String x))}
+(: Id->CId (-> Id IdC))
+{define (Id->CId x) (IdC (Id-String x))}
 {: Id-String (-> Id String)}
 {define (Id-String x)
   (list->string
@@ -93,8 +93,10 @@
 {: typedefs-Value->global-main-local-value (-> (Mutable-HashTable Type String) Value (List String String String String))}
 {define (typedefs-Value->global-main-local-value m v)
   (cond
-    [(Id? v) (list "" "" "" (CId-String (Id->CId v)))]
-    [(CId? v) (list "" "" "" (CId-String v))]
+    [(Id? v) (list "" "" "" (Id-String v))]
+    [(IdC? v) (list "" "" "" (IdC-String v))]
     [(Dot? v) {let ([x (typedefs-Value->global-main-local-value m (Dot-Value v))])
-                (list (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(CId-String (Id->CId (Dot-Id v)))))}]
+                (list (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(Id-String (Dot-Id v))))}]
+    [(DotC? v) {let ([x (typedefs-Value->global-main-local-value m (DotC-Value v))])
+                (list (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(IdC-String (DotC-CId v))))}]
     [else (raise 'WIP)])}
