@@ -41,7 +41,7 @@
   (TypeArrow [args : (Listof Type)] [result : Type])
   (TypeIdC [IdC : IdC])
   (TypeStruct [Id : Id])
-  (TypeCStruct [IdC : IdC])}
+  (TypeStructC [IdC : IdC])}
 
 {define-type Value (U Left Apply Function (Pairof Value (Listof Line)))}
 {define-type Left (U Id IdC Dot DotC (Pairof Left (Listof Line)))}
@@ -86,7 +86,7 @@
 {: valueS (-> (Listof String) String)}
 {define valueS sixth}
 
-{define-type typedefs (Mutable-HashTable Type (List String String String))} ; decl / define / type
+{define-type typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; decl / type ; List用來說明依賴，刪除重複。
 
 {: typedefs-Line->decls-global-main-localdecls-local
    (-> typedefs Line (List String String String String String))}
@@ -131,15 +131,22 @@
                               (cdr x))} (Function-args v))])
        (raise 'WIP)}]
     [(pair? v) (raise 'WIP)]
-    [else (raise '0%)]}}
+    [else (raise 'WIP)]}}
 
 {: typedefs-Type->type
    (-> typedefs Type String)}
 {define (typedefs-Type->type m t)
-  (third
+  (cdr
    (hash-ref!
-   m t
-   {λ ()
-     {cond
-       [(TypeIdC? t) (list "" "" (IdC-String (TypeIdC-IdC t)))]
-       [else (raise 'WIP)]}}))}
+    m t
+    {λ ()
+      {cond
+        [(TypeIdC? t) (cons '() (IdC-String (TypeIdC-IdC t)))]
+        [(TypeStruct? t) (cons '() (string-append "struct "(Id-String (TypeStruct-Id t))))]
+        [(TypeStructC? t) (cons '() (string-append "struct "(IdC-String (TypeStructC-IdC t))))]
+        [(TypeArrow? t)
+         (typedefs-Type->type m (TypeArrow-result t))
+         {let ([args (map {λ ([x : Type]) (typedefs-Type->type m x) (hash-ref m x)} (TypeArrow-args t))]
+               [result (hash-ref m (TypeArrow-result t))])
+           (raise 'WIP)}]
+        [else (raise 'WIP)]}}))}
