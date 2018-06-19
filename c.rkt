@@ -105,7 +105,7 @@
 {: typedefs-Value->decls-global-main-localdecls-local-value
    (-> (Mutable-HashTable Type String) Value (List String String String String String String))}
 {define (typedefs-Value->decls-global-main-localdecls-local-value m v)
-  (cond
+  {cond
     [(Id? v) (list "" "" "" "" "" (Id-String v))]
     [(IdC? v) (list "" "" "" "" "" (IdC-String v))]
     [(Dot? v)
@@ -124,4 +124,6 @@
         (apply string-append (localdeclsS f) (map localdeclsS xs))
         (apply string-append (localS f) (map localS xs))
         (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
-    [else (raise 'WIP)])}
+    [(Function? v) (raise 'WIP)]
+    [(pair? v) (raise 'WIP)]
+    [else (raise '0%)]}}
