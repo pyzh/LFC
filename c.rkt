@@ -44,7 +44,7 @@
 
 {define-type Value (U Left Apply Function (Pairof Value (Listof Line)))}
 {define-type Left (U Id IdC Dot DotC (Pairof Left (Listof Line)))}
-{struct Apply ([f : Value] [List : (Listof Value)]) #:transparent}
+{struct Apply ([f : Value] [Values : (Listof Value)]) #:transparent}
 {struct Dot ([Value : Value] [Id : Id]) #:transparent}
 {struct DotC ([Value : Value] [CId : IdC]) #:transparent}
 {struct Function ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
@@ -74,9 +74,13 @@
                   (cons #\_ (cons x (loop xs 'm)))
                   (loop xs 'b))]}})})}
 
+{: globalS (-> (Listof String) String)}
 {define globalS first}
+{: mainS (-> (Listof String) String)}
 {define mainS second}
+{: localS (-> (Listof String) String)}
 {define localS third}
+{: valueS (-> (Listof String) String)}
 {define valueS fourth}
 
 {: typedefs-Line->global-main-local (-> (Mutable-HashTable Type String) Line (List String String String))}
@@ -95,8 +99,17 @@
   (cond
     [(Id? v) (list "" "" "" (Id-String v))]
     [(IdC? v) (list "" "" "" (IdC-String v))]
-    [(Dot? v) {let ([x (typedefs-Value->global-main-local-value m (Dot-Value v))])
+    [(Dot? v)
+     {let ([x (typedefs-Value->global-main-local-value m (Dot-Value v))])
                 (list (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(Id-String (Dot-Id v))))}]
-    [(DotC? v) {let ([x (typedefs-Value->global-main-local-value m (DotC-Value v))])
+    [(DotC? v)
+     {let ([x (typedefs-Value->global-main-local-value m (DotC-Value v))])
                 (list (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(IdC-String (DotC-CId v))))}]
+    [(Apply? v)
+     {let ([f (typedefs-Value->global-main-local-value m (Apply-f v))]
+           [xs (map {λ ([x : Value]) (typedefs-Value->global-main-local-value m x)} (Apply-Values v))])
+       (list (apply string-append (globalS f) (map globalS xs))
+             (apply string-append (mainS f) (map mainS xs))
+             (apply string-append (localS f) (map localS xs))
+             (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
     [else (raise 'WIP)])}
