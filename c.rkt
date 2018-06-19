@@ -74,42 +74,48 @@
                   (cons #\_ (cons x (loop xs 'm)))
                   (loop xs 'b))]}})})}
 
+{: declsS (-> (Listof String) String)}
+{define declsS first}
 {: globalS (-> (Listof String) String)}
-{define globalS first}
+{define globalS second}
 {: mainS (-> (Listof String) String)}
-{define mainS second}
+{define mainS third}
 {: localS (-> (Listof String) String)}
-{define localS third}
+{define localS fourth}
 {: valueS (-> (Listof String) String)}
-{define valueS fourth}
+{define valueS fifth}
 
-{: typedefs-Line->global-main-local (-> (Mutable-HashTable Type String) Line (List String String String))}
-{define (typedefs-Line->global-main-local m l)
+{: typedefs-Line->decls-global-main-local (-> (Mutable-HashTable Type String) Line (List String String String String))}
+{define (typedefs-Line->decls-global-main-local m l)
   {cond
     [(Block? l)
-     {let ([xs (map {λ ([x : Line]) (typedefs-Line->global-main-local m x)} (Block-Lines l))])
-       (list (apply string-append (map {ann globalS (-> (List String String String) String)} xs))
-             (apply string-append (map {ann mainS (-> (List String String String) String)} xs))
-             (apply string-append (map {ann localS (-> (List String String String) String)} xs)))}]
+     {let ([xs (map {λ ([x : Line]) (typedefs-Line->decls-global-main-local m x)} (Block-Lines l))])
+       (list
+        (apply string-append (map declsS xs))
+        (apply string-append (map globalS xs))
+        (apply string-append (map mainS xs))
+        (apply string-append (map localS xs)))}]
     [(DefVar? l) (raise 'WIP)]
     [else (raise 'WIP)]}}
 
-{: typedefs-Value->global-main-local-value (-> (Mutable-HashTable Type String) Value (List String String String String))}
-{define (typedefs-Value->global-main-local-value m v)
+{: typedefs-Value->decls-global-main-local-value (-> (Mutable-HashTable Type String) Value (List String String String String String))}
+{define (typedefs-Value->decls-global-main-local-value m v)
   (cond
-    [(Id? v) (list "" "" "" (Id-String v))]
-    [(IdC? v) (list "" "" "" (IdC-String v))]
+    [(Id? v) (list "" "" "" "" (Id-String v))]
+    [(IdC? v) (list "" "" "" "" (IdC-String v))]
     [(Dot? v)
-     {let ([x (typedefs-Value->global-main-local-value m (Dot-Value v))])
-                (list (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(Id-String (Dot-Id v))))}]
+     {let ([x (typedefs-Value->decls-global-main-local-value m (Dot-Value v))])
+       (list (declsS x) (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(Id-String (Dot-Id v))))}]
     [(DotC? v)
-     {let ([x (typedefs-Value->global-main-local-value m (DotC-Value v))])
-                (list (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(IdC-String (DotC-CId v))))}]
+     {let ([x (typedefs-Value->decls-global-main-local-value m (DotC-Value v))])
+       (list (declsS x) (globalS x) (mainS x) (localS x) (string-append "("(valueS x)")."(IdC-String (DotC-CId v))))}]
     [(Apply? v)
-     {let ([f (typedefs-Value->global-main-local-value m (Apply-f v))]
-           [xs (map {λ ([x : Value]) (typedefs-Value->global-main-local-value m x)} (Apply-Values v))])
-       (list (apply string-append (globalS f) (map globalS xs))
-             (apply string-append (mainS f) (map mainS xs))
-             (apply string-append (localS f) (map localS xs))
-             (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
+     {let ([f (typedefs-Value->decls-global-main-local-value m (Apply-f v))]
+           [xs (map {λ ([x : Value]) (typedefs-Value->decls-global-main-local-value m x)} (Apply-Values v))])
+       (list
+        (apply string-append (declsS f) (map declsS xs))
+        (apply string-append (globalS f) (map globalS xs))
+        (apply string-append (mainS f) (map mainS xs))
+        (apply string-append (localS f) (map localS xs))
+        (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
     [else (raise 'WIP)])}
