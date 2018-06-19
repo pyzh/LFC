@@ -148,5 +148,5 @@
          (typedefs-Type->type m (TypeArrow-result t))
          {let ([args (map {λ ([x : Type]) (typedefs-Type->type m x) (hash-ref m x)} (TypeArrow-args t))]
                [result (hash-ref m (TypeArrow-result t))])
-           (raise 'WIP)}]
+           (cons (append (apply append (car result) (map car args)) (list (raise 'WIP))) (raise 'WIP))}]
         [else (raise 'WIP)]}}))}
