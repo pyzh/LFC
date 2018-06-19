@@ -119,15 +119,16 @@
     [(DefVar? l) (raise 'WIP)]
     [(DefFuncGlobal? l)
      {let ([f (DefFuncGlobal-Func l)] [n (IdU-String (DefFuncGlobal-IdU l))])
-     {let ([args (map {λ ([x : (Pairof Type Id)]) (cons (typedefs-Type->type m (car x)) (cdr x))} (Func-args f))]
-           [result (typedefs-Type->type m (Func-result f))]
-           [ls (typedefs-Lines->decls-global-main-localdecls-local m (Func-Lines f))])
-       (list
-        (string-append (declsS ls) result" "n"("(string-add-between (map {ann car (-> (Pairof String Id) String)} args) ",")");")
-        (globalS ls) ;WIP
-        (mainS ls)
-        ""
-        "")}}]
+       {let ([args (map {λ ([x : (Pairof Type Id)]) (cons (typedefs-Type->type m (car x)) (cdr x))} (Func-args f))]
+             [result (typedefs-Type->type m (Func-result f))]
+             [ls (typedefs-Lines->decls-global-main-localdecls-local m (Func-Lines f))])
+         {let ([beg (string-append result" "n"("(string-add-between (map {ann car (-> (Pairof String Id) String)} args) ",")")")])
+           (list
+            (string-append (declsS ls) beg";")
+            (string-append (globalS ls) beg"{"(localdeclsS ls)(localS ls)"}")
+            (mainS ls)
+            ""
+            "")}}}]
     [else (raise 'WIP)]}}
 
 {: typedefs-Value->decls-global-main-localdecls-local-value
