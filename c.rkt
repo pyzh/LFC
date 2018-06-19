@@ -38,6 +38,7 @@
   (DefStruct [Id : Id] [List : (Listof (Pairof Type Id))])}
 
 {define-data Type
+  (TypeArrow [args : (Listof Type)] [result : Type])
   (TypeC [CId : IdC])
   (TypeStruct [Id : Id])
   (TypeCStruct [CId : IdC])}
@@ -127,3 +128,9 @@
     [(Function? v) (raise 'WIP)]
     [(pair? v) (raise 'WIP)]
     [else (raise '0%)]}}
+
+{: typedefs-Type->decls-global-main-localdecls-local-value
+   (-> (Mutable-HashTable Type String) Type (List String String String String String String))}
+{define (typedefs-Type->decls-global-main-localdecls-local-value m t)
+  {cond
+    [else (raise 'WIP)]}}
