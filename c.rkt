@@ -29,13 +29,15 @@
 
 {struct Id ([addr : (Listof Natural)] [Symbol : Symbol]) #:transparent}
 {struct IdC ([String : String]) #:transparent}
+{define-type IdU (U Id IdC)}
 
 {define-data Line
   (Return [Value : Value])
   (Block [Lines : (Listof Line)])
   (DefVar [Id : Id] [Value : Value])
   (VarSet! [Left : Left] [Value : Value])
-  (DefStruct [Id : Id] [List : (Listof (Pairof Type Id))])}
+  (DefFuncGlobal [IdU : IdU] [Func : Func])
+  (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
 
 {define-data Type
   (TypeArrow [args : (Listof Type)] [result : Type])
@@ -43,12 +45,12 @@
   (TypeStruct [Id : Id])
   (TypeStructC [IdC : IdC])}
 
-{define-type Value (U Left Apply Function (Pairof Value (Listof Line)))}
+{define-type Value (U Left Apply Func (Pairof Value (Listof Line)))}
 {define-type Left (U Id IdC Dot DotC (Pairof Left (Listof Line)))}
 {struct Apply ([f : Value] [Values : (Listof Value)]) #:transparent}
 {struct Dot ([Value : Value] [Id : Id]) #:transparent}
 {struct DotC ([Value : Value] [IdC : IdC]) #:transparent}
-{struct Function ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
+{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
 
 {define alphabet (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"))}
 {define alphabetdi (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"))}
@@ -125,10 +127,10 @@
         (apply string-append (localdeclsS f) (map localdeclsS xs))
         (apply string-append (localS f) (map localS xs))
         (string-append "("(valueS f)")("(apply string-append (add-between (map valueS xs) ","))")"))}]
-    [(Function? v)
+    [(Func? v)
      {let ([args (map {λ ([x : (Pairof Type Id)])
                         (cons (typedefs-Type->type m (car x))
-                              (cdr x))} (Function-args v))])
+                              (cdr x))} (Func-args v))])
        (raise 'WIP)}]
     [(pair? v) (raise 'WIP)]
     [else (raise 'WIP)]}}
