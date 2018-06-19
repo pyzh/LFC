@@ -56,24 +56,22 @@
 {define (Id->CId x) (IdC (Id-String x))}
 {: Id-String (-> Id String)}
 {define (Id-String x)
-  (list->string
-   {let loop ([xs (string->list (symbol->string (Id-Symbol x)))] [s : (U 'h 'm 'b) 'h])
-     (if (null? xs)
-         (string->list (apply string-append (add-between (cons "_LFC" (map {λ (x) (number->string x)} (Id-addr x))) "_")))
-         {let ([x (car xs)] [xs (cdr xs)])
-           {case s
-             [(h)
-              (if (set-member? alphabet x)
-                  (cons x (loop xs 'm))
-                  (loop xs 'h))]
-             [(m)
-              (if (set-member? alphabetdi x)
-                  (cons x (loop xs 'm))
-                  (loop xs 'b))]
-             [(b)
-              (if (set-member? alphabetdi x)
-                  (cons #\_ (cons x (loop xs 'm)))
-                  (loop xs 'b))]}})})}
+  (string-append
+   "LFC"
+   (list->string
+    {let loop ([xs (string->list (symbol->string (Id-Symbol x)))] [s : (U 'm 'b) 'b])
+      (if (null? xs)
+          (string->list (apply string-append (add-between (cons "_LFC" (map {λ (x) (number->string x)} (Id-addr x))) "_")))
+          {let ([x (car xs)] [xs (cdr xs)])
+            {case s
+              [(m)
+               (if (set-member? alphabetdi x)
+                   (cons x (loop xs 'm))
+                   (loop xs 'b))]
+              [(b)
+               (if (set-member? alphabetdi x)
+                   (cons #\_ (cons x (loop xs 'm)))
+                   (loop xs 'b))]}})}))}
 
 {: declsS (-> (Listof String) String)}
 {define declsS first}
