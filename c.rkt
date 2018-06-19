@@ -34,7 +34,8 @@
 {define-data Line
   (Return [Value : Value])
   (Block [Lines : (Listof Line)])
-  (DefVar [Id : Id] [Value : Value])
+  (DefVar [Id : Id] [Type : Type] [Value : Value])
+  (DefVarGlobal [IdU : IdU] [Type : Type] [Value : Value])
   (VarSet! [Left : Left] [Value : Value])
   (DefFuncGlobal [IdU : IdU] [Func : Func])
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
@@ -91,6 +92,11 @@
 
 {define-type typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; decl / type ; List用來說明依賴，刪除重複。
 
+{: typedefs-Lines->decls-global-main-localdecls-local
+   (-> typedefs (Listof Line) (List String String String String String))}
+{define (typedefs-Lines->decls-global-main-localdecls-local m ls)
+  (typedefs-Line->decls-global-main-localdecls-local m (Block ls))}
+
 {: typedefs-Line->decls-global-main-localdecls-local
    (-> typedefs Line (List String String String String String))}
 {define (typedefs-Line->decls-global-main-localdecls-local m l)
@@ -104,6 +110,12 @@
         (apply string-append (map localdeclsS xs))
         (apply string-append (map localS xs)))}]
     [(DefVar? l) (raise 'WIP)]
+    [(DefFuncGlobal? l)
+     {let ([f (DefFuncGlobal-Func l)])
+     {let ([args (map {λ ([x : (Pairof Type Id)]) (cons (typedefs-Type->type m (car x)) (cdr x))} (Func-args f))]
+           [result (typedefs-Type->type m (Func-result f))]
+           [ls (typedefs-Lines->decls-global-main-localdecls-local m (Func-Lines f))])
+       (raise 'WIP)}}]
     [else (raise 'WIP)]}}
 
 {: typedefs-Value->decls-global-main-localdecls-local-value
