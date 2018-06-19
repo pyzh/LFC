@@ -48,7 +48,7 @@
   (TypeIdC [IdC : IdC])
   (TypeStruct [IdU : IdU])}
 
-{define-type Value (U Left Apply (Pairof Value (Listof Line)))}
+{define-type Value (U Void Left Apply (Pairof Value (Listof Line)))}
 {define-type Left (U IdU Dot (Pairof Left (Listof Line)))}
 {struct Apply ([f : Value] [Values : (Listof Value)]) #:transparent}
 {struct Dot ([Value : Value] [IdU : IdU]) #:transparent}
@@ -108,6 +108,18 @@
    (-> typedefs Line (List String String String String String))}
 {define (typedefs-Line->decls-global-main-localdecls-local m l)
   {cond
+    [(Return? l)
+     (let ([x (typedefs-Value->decls-global-main-localdecls-local-value m (Return-Value l))])
+       (list
+        (declsS x)
+        (globalS x)
+        (mainS x)
+        (localdeclsS x)
+        (string-append
+         (localS x)
+         (if (equal? (valueS x) VOID)
+             "return;"
+             (string-append "return "(valueS x)";")))))]
     [(Block? l)
      {let ([xs (map {λ ([x : Line]) (typedefs-Line->decls-global-main-localdecls-local m x)} (Block-Lines l))])
        (list
@@ -131,10 +143,12 @@
             "")}}}]
     [else (raise 'WIP)]}}
 
+{define VOID (symbol->string (gensym "_LFC__VOID_"))}
 {: typedefs-Value->decls-global-main-localdecls-local-value
    (-> typedefs Value (List String String String String String String))}
 {define (typedefs-Value->decls-global-main-localdecls-local-value m v)
   {cond
+    [(void? v) (list "" "" "" "" "" VOID)]
     [(Id? v) (list "" "" "" "" "" (Id-String v))]
     [(IdC? v) (list "" "" "" "" "" (IdC-String v))]
     [(Dot? v)
