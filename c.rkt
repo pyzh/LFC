@@ -72,16 +72,16 @@
                        (cons #\_ (cons x (loop xs 'm)))
                        (loop xs 'b))]}})}))}
 
-{: Line->global-main-local (-> Line (List String String String))}
-{define (Line->global-main-local l)
+{: typedefs-Line->global-main-local (-> (Mutable-HashTable Type String) Line (List String String String))}
+{define (typedefs-Line->global-main-local m l)
   {cond
     [(Block? l)
-     {let ([xs (map Line->global-main-local (Block-Lines l))])
+     {let ([xs (map {λ ([x : Line]) (typedefs-Line->global-main-local m x)} (Block-Lines l))])
        (list (apply string-append (map {ann first (-> (List String String String) String)} xs))
              (apply string-append (map {ann second (-> (List String String String) String)} xs))
              (apply string-append (map {ann third (-> (List String String String) String)} xs)))}]
     [(DefVar? l) (raise 'WIP)]
     [else (raise 'WIP)]}}
 
-{: Value->global-main-local-value (-> Value (List String String String String))}
-{define (Value->global-main-local-value v) (raise 'WIP)}
+{: typedefs-Value->global-main-local-value (-> (Mutable-HashTable Type String) Value (List String String String String))}
+{define (typedefs-Value->global-main-local-value m v) (raise 'WIP)}
