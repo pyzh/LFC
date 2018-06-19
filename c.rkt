@@ -27,7 +27,7 @@
 {define-type (Maybe a) (U a False)}
 {define-type (Map k v) (Immutable-HashTable k v)}
 
-{struct Id ([addr : (Listof Natural)] [Symbol : Symbol]) #:transparent}
+{struct Id ([addr : (Listof String)] [Symbol : Symbol]) #:transparent}
 {struct IdC ([String : String]) #:transparent}
 {define-type IdU (U Id IdC)}
 
@@ -51,6 +51,11 @@
 {struct Apply ([f : Value] [Values : (Listof Value)]) #:transparent}
 {struct Dot ([Value : Value] [IdU : IdU]) #:transparent}
 
+{define c 0}
+{define (gen-lfc-str)
+  (set! c (+ c 1))
+  (string-append "LFC_"(number->string c)"_T")}
+
 {define alphabet (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"))}
 {define alphabetdi (list->set (string->list "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"))}
 (: Id->IdC (-> Id IdC))
@@ -62,7 +67,7 @@
    (list->string
     {let loop ([xs (string->list (symbol->string (Id-Symbol x)))] [s : (U 'm 'b) 'b])
       (if (null? xs)
-          (string->list (apply string-append (add-between (cons "_LFC" (map {λ (x) (number->string x)} (Id-addr x))) "_")))
+          (string->list (apply string-append (add-between (cons "_LFC" (Id-addr x)) "_")))
           {let ([x (car xs)] [xs (cdr xs)])
             {case s
               [(m)
