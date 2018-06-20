@@ -28,8 +28,6 @@
 {define-type (Map k v) (Immutable-HashTable k v)}
 {: string-add-between (-> (Listof String) String String)}
 {define (string-add-between xs a) (apply string-append (add-between xs a))}
-{: S (-> String String)}
-{define (S s) (port->string (car (process s)))}
 
 {struct Id ([addr : (Listof String)] [Symbol : Symbol]) #:transparent}
 {struct IdC ([String : String]) #:transparent}
@@ -102,7 +100,11 @@
 {: IdU-String (-> IdU String)}
 {define (IdU-String i) (if (IdC? i) (IdC-String i) (Id-String i))}
 
-{define size 'WIP}
+{: size (Immutable-HashTable Symbol String)}
+{define size
+  (make-immutable-hash
+   (map {λ ([x : String]) {match (string-split x ":") [(list x y) (cons (string->symbol x) y)]}}
+        (string-split (port->string (open-input-file "size.conf")) "\n")))}
 {: compile (-> Line String)} 
 {define (compile l)
   {with-new-LFC-ID
