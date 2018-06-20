@@ -44,13 +44,16 @@
   (DefVarGlobal [IdU : IdU] [Type : Type] [Value : Value])
   (Set! [Left : Left] [Value : Value])
   (DefFuncGlobal [IdU : IdU] [Func : Func])
+  (DefUnion [IdU : IdU] [List : (Listof (Pairof Type IdU))])
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
 {struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])}
 
 {define-data Type
   (TypeArrow [args : (Listof Type)] [result : Type])
   (TypeIdC [IdC : IdC])
-  (TypeStruct [IdU : IdU])}
+  (TypeStruct [IdU : IdU])
+  (TypeUnion [IdU : IdU])
+  }
 
 {define-type Value (U Void Left Apply (Pairof Value Line))}
 {define-type Left (U IdU Dot (Pairof Left Line))}
@@ -94,8 +97,8 @@
 {: compile (-> Line String)} 
 {define (compile l)
   {with-new-LFC-ID
-      
-      {define decls '("")}
+      '||
+    {define decls '("")}
     {define globals '("")}
     {define mains ""}
     {: structs (Mutable-HashTable IdU (List (Listof (U IdC TypeStruct)) (Listof String)))} ; id -> deps / global-lines
@@ -108,8 +111,15 @@
 
     {: Line->localdecls-locals (-> Line (List String String))}
     {define (Line->localdecls-locals l)
-      {cond-par
-       [else (raise 'WIP)]}}
+      {match l
+        [(Return x) (raise 'WIP)]
+        [(Line2 x y) (raise 'WIP)]
+        [(DefVar Id Type Value) (raise 'WIP)]
+        [(DefVarGlobal Id Type Value) (raise 'WIP)]
+        [(Set! l v) (raise 'WIP)]
+        [(DefFuncGlobal id f) (raise 'WIP)]
+        [(DefUnion id tis) (raise 'WIP)]
+        [(DefStruct id tis) (raise 'WIP)]}}
     {: Value->localdecls-locals-value (-> Value (List String String String))}
     {define (Value->localdecls-locals-value l)
       {cond
