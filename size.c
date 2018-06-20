@@ -1,8 +1,8 @@
 #include <stdio.h>
 #define MI(t,n,i) I(sizeof(t),n,i)
-#define P(v) if(*v!=0){printf(#v);printf(":%s\n",v);}
+#define P(v) if(v!=NULL){printf(#v);printf(":%s\n",v);}
 typedef char* string;
-string i8, n8, i16, n16, i32, n32, i64, n64 = "";
+string i8 = NULL, n8 = NULL, i16 = NULL, n16 = NULL, i32 = NULL, n32 = NULL, i64 = NULL, n64 = NULL;
 void I(unsigned char l,string n,string i) {
 	switch(l){
 		case 1:i8=i;n8=n;break;
