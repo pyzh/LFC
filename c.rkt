@@ -112,8 +112,12 @@
     {: Line->localdecls-locals (-> Line (List String String))}
     {define (Line->localdecls-locals l)
       {match l
-        [(Return x) (raise 'WIP)]
-        [(Line2 x y) (raise 'WIP)]
+        [(Return x)
+         {match (Value->localdecls-locals-value x)
+           [(list localdecls locals value) (raise 'WIP)]}]
+        [(Line2 x y)
+         {match* ((Line->localdecls-locals x) (Line->localdecls-locals x))
+           [((list d0 l0) (list d1 l1)) (list (string-append d0 d1) (string-append l0 l1))]}]
         [(DefVar Id Type Value) (raise 'WIP)]
         [(DefVarGlobal Id Type Value) (raise 'WIP)]
         [(Set! l v) (raise 'WIP)]
