@@ -53,6 +53,16 @@
   (TypeIdC [IdC : IdC])
   (TypeStruct [IdU : IdU])
   (TypeUnion [IdU : IdU])
+  (TypeVoid)
+  (TypeNat8)
+  (TypeNat16)
+  (TypeNat32)
+  (TypeNat64)
+  (TypeInt8)
+  (TypeInt16)
+  (TypeInt32)
+  (TypeInt64)
+  (TypeFloat)
   }
 
 {define-type Value (U Void Left Apply (Pairof Value Line))}
@@ -131,6 +141,15 @@
     {define (Value->localdecls-locals-value l)
       {cond
         [else (raise 'WIP)]}}
+    {: Type->type (-> Type String)}
+    {define (Type->type t) (cdr (%Type->type t))}
+    {: %Type->type (-> Type (Pairof (Listof String) String))}
+    {define (%Type->type t)
+      (hash-ref!
+       typedefs t
+       {λ ()
+         {match t
+           [_ (raise 'WIP)]}})}
   
     {: %R (-> (Setof String) (Listof String) (Listof String))}
     {define (%R s xs)
