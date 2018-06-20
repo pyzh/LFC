@@ -114,7 +114,10 @@
       {match l
         [(Return x)
          {match (Value->localdecls-locals-value x)
-           [(list localdecls locals value) (raise 'WIP)]}]
+           [(list d l v)
+            (if (false? v)
+                (list d (string-append l "return;"))
+                (list d (string-append l "return "v";")))]}]
         [(Line2 x y)
          {match* ((Line->localdecls-locals x) (Line->localdecls-locals x))
            [((list d0 l0) (list d1 l1)) (list (string-append d0 d1) (string-append l0 l1))]}]
@@ -124,7 +127,7 @@
         [(DefFuncGlobal id f) (raise 'WIP)]
         [(DefUnion id tis) (raise 'WIP)]
         [(DefStruct id tis) (raise 'WIP)]}}
-    {: Value->localdecls-locals-value (-> Value (List String String String))}
+    {: Value->localdecls-locals-value (-> Value (List String String (Maybe String)))}
     {define (Value->localdecls-locals-value l)
       {cond
         [else (raise 'WIP)]}}
