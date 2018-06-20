@@ -28,6 +28,10 @@
 {define-type (Map k v) (Immutable-HashTable k v)}
 {: string-add-between (-> (Listof String) String String)}
 {define (string-add-between xs a) (apply string-append (add-between xs a))}
+{define-syntax-rule {cond-par a ... [c0 . x0]}
+  {cond
+    a ...
+    [else . x0]}}
 
 {struct Id ([addr : (Listof String)] [Symbol : Symbol]) #:transparent}
 {struct IdC ([String : String]) #:transparent}
@@ -38,18 +42,18 @@
   (Line2 [x : Line] [y : Line])
   (DefVar [Id : Id] [Type : Type] [Value : Value])
   (DefVarGlobal [IdU : IdU] [Type : Type] [Value : Value])
-  (VarSet! [Left : Left] [Value : Value])
+  (Set! [Left : Left] [Value : Value])
   (DefFuncGlobal [IdU : IdU] [Func : Func])
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
-{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Lines : (Listof Line)])}
+{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])}
 
 {define-data Type
   (TypeArrow [args : (Listof Type)] [result : Type])
   (TypeIdC [IdC : IdC])
   (TypeStruct [IdU : IdU])}
 
-{define-type Value (U Void Left Apply (Pairof Value (Listof Line)))}
-{define-type Left (U IdU Dot (Pairof Left (Listof Line)))}
+{define-type Value (U Void Left Apply (Pairof Value Line))}
+{define-type Left (U IdU Dot (Pairof Left Line))}
 {struct Apply ([f : Value] [Values : (Listof Value)]) #:transparent}
 {struct Dot ([Value : Value] [IdU : IdU]) #:transparent}
 
@@ -63,9 +67,12 @@
 (: Id->IdC (-> Id IdC))
 {define (Id->IdC x) (IdC (Id-String x))}
 {: Id-String (-> Id String)}
+{define LFC-ID (make-parameter (symbol->string (gensym '||)))}
+{define-syntax-rule {with-new-LFC-ID  . x}
+  {parameterize ([LFC-ID (symbol->string (gensym '||))]) . x}}
 {define (Id-String x)
   (string-append
-   "LFC"
+   "LFC"(LFC-ID)
    (list->string
     {let loop ([xs (string->list (symbol->string (Id-Symbol x)))] [s : (U 'm 'b) 'b])
       (if (null? xs)
@@ -86,26 +93,41 @@
 
 {: compile (-> Line String)} 
 {define (compile l)
-  {define decls '("")}
-  {define globals '("")}
-  {define mains ""}
-  {: structs (Mutable-HashTable IdU (List (Listof (U IdC TypeStruct)) (Listof String)))} ; id -> deps / global-lines
-  {define structs (make-hash)}
-  (raise 'WIP)
+  {with-new-LFC-ID
+      
+      {define decls '("")}
+    {define globals '("")}
+    {define mains ""}
+    {: structs (Mutable-HashTable IdU (List (Listof (U IdC TypeStruct)) (Listof String)))} ; id -> deps / global-lines
+    {define structs (make-hash)}
+    {: typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; type -> decl / type
+    {define typedefs (make-hash)}
 
-  {: %R (-> (Setof String) (Listof String) (Listof String))}
-  {define (%R s xs)
-    {cond
-      [(null? xs) '()]
-      [(set-member? s (car xs)) (%R s (cdr xs))]
-      [else (cons (car xs) (%R (set-add s (car xs)) (cdr xs)))]}}
-  {: R (-> (Listof String) (Listof String))}
-  {define (R xs) (%R (set) xs)}
-  (string-append
-   (apply string-append (R decls))
-   (apply string-append (R globals))
-   "int main(){"mains"return 0;}")
-  }
+  
+    (raise 'WIP)
+
+    {: Line->localdecls-locals (-> Line (List String String))}
+    {define (Line->localdecls-locals l)
+      {cond-par
+       [else (raise 'WIP)]}}
+    {: Value->localdecls-locals-value (-> Value (List String String String))}
+    {define (Value->localdecls-locals-value l)
+      {cond
+        [else (raise 'WIP)]}}
+  
+    {: %R (-> (Setof String) (Listof String) (Listof String))}
+    {define (%R s xs)
+      {cond
+        [(null? xs) '()]
+        [(set-member? s (car xs)) (%R s (cdr xs))]
+        [else (cons (car xs) (%R (set-add s (car xs)) (cdr xs)))]}}
+    {: R (-> (Listof String) (Listof String))}
+    {define (R xs) (%R (set) xs)}
+    (string-append
+     (apply string-append (R decls))
+     (apply string-append (R globals))
+     "int main(){"mains"return 0;}")
+    }}
 ;{: declsS (-> (Listof String) String)}
 ;{define declsS first}
 ;{: globalS (-> (Listof String) String)}
