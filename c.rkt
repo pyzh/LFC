@@ -152,11 +152,19 @@
          {let ([s (IdU-String IdU)] [t (Type->type Type)])
            {match (Value->localdecls-locals-value Value)
              [(list lds ls a)
-              {append! decls (list lds (string-append t" "s";"))}
+              {append! decls (list lds)}
               {string-append! mains ls}
-              {string-append! mains (string-append s"="(raise 'WIP))}
+              (if (or (equal? t "void") (equal? a #f))
+                  (void)
+                  {begin
+                    {append! decls (list (string-append t" "s";"))}
+                    {string-append! mains (string-append s"="a)}})
               (list "" "")]}}]
-        [(Set! l v) (raise 'WIP)]
+        [(Set! l v)
+         {match* ((Value->localdecls-locals-value l) (Value->localdecls-locals-value v))
+           [((list ds ls _) (list ds2 ls2 #f)) (list (string-append ds ds2) (string-append ls ls2))]
+           [((list ds ls (? string? l)) (list ds2 ls2 (? string? v)))
+            (list (string-append ds ds2) (string-append ls ls2 l"="v";"))]}]
         [(DefFuncGlobal id f) (raise 'WIP)]
         [(DefUnion id tis) (raise 'WIP)]
         [(DefStruct id tis) (raise 'WIP)]}}
