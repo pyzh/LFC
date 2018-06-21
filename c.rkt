@@ -156,7 +156,17 @@
        typedefs t
        {λ ()
          {match t
-           [(TypeArrow args result) (raise 'WIP)];(TypeArrow [args : (Listof Type)] [result : Type])
+           [(TypeArrow args result)
+            {let ([args (map %Type->type args)] [result (%Type->type result)] [s (gen-lfc-str)])
+              (cons
+               (append
+                (apply append (map {ann car (-> (Pairof (Listof String) String) (Listof String))} args))
+                (car result)
+                (list (string-append
+                        "typedef "(cdr result)" (*"s")("(string-add-between (map {ann cdr (-> (Pairof (Listof String) String) String)}
+                                                                                               args) ",")");")))
+               s
+               )}]
            [_
             (cons
              '()
