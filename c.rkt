@@ -148,72 +148,72 @@
                   (list lds ls)
                   (list (string-append lds t" "s";")
                         (string-append ls s"="a)))]}}]
-         [(DefVarGlobal IdU Type Value)
-          {let ([s (IdU-String IdU)] [t (Type->type Type)])
-            {match (Value->localdecls-locals-value Value)
-              [(list lds ls a)
-               {append! decls (list lds (string-append t" "s";"))}
-               {string-append! mains ls}
-               {string-append! mains (string-append s"="(raise 'WIP))}
-               (list "" "")]}}]
-         [(Set! l v) (raise 'WIP)]
-         [(DefFuncGlobal id f) (raise 'WIP)]
-         [(DefUnion id tis) (raise 'WIP)]
-         [(DefStruct id tis) (raise 'WIP)]}}
-{: Value->localdecls-locals-value (-> Value (List String String (Maybe String)))}
-{define (Value->localdecls-locals-value l)
-  {cond
-    [else (raise 'WIP)]}}
-{: Type->type (-> Type String)}
-{define (Type->type t) (cdr (%Type->type t))}
-{: %Type->type (-> Type (Pairof (Listof String) String))}
-{define (%Type->type t)
-  (hash-ref!
-   typedefs t
-   {λ ()
-     {match t
-       [(TypeArrow args result)
-        {let ([args (map %Type->type args)] [result (%Type->type result)] [s (gen-lfc-str)])
-          (cons
-           (append
-            (apply append (map {ann car (-> (Pairof (Listof String) String) (Listof String))} args))
-            (car result)
-            (list (string-append
-                   "typedef "(cdr result)" (*"s")("(string-add-between (map {ann cdr (-> (Pairof (Listof String) String) String)}
-                                                                            args) ",")");")))
-           s
-           )}]
-       [_
-        (cons
-         '()
+        [(DefVarGlobal IdU Type Value)
+         {let ([s (IdU-String IdU)] [t (Type->type Type)])
+           {match (Value->localdecls-locals-value Value)
+             [(list lds ls a)
+              {append! decls (list lds (string-append t" "s";"))}
+              {string-append! mains ls}
+              {string-append! mains (string-append s"="(raise 'WIP))}
+              (list "" "")]}}]
+        [(Set! l v) (raise 'WIP)]
+        [(DefFuncGlobal id f) (raise 'WIP)]
+        [(DefUnion id tis) (raise 'WIP)]
+        [(DefStruct id tis) (raise 'WIP)]}}
+    {: Value->localdecls-locals-value (-> Value (List String String (Maybe String)))}
+    {define (Value->localdecls-locals-value l)
+      {cond
+        [else (raise 'WIP)]}}
+    {: Type->type (-> Type String)}
+    {define (Type->type t) (cdr (%Type->type t))}
+    {: %Type->type (-> Type (Pairof (Listof String) String))}
+    {define (%Type->type t)
+      (hash-ref!
+       typedefs t
+       {λ ()
          {match t
-           [(TypeIdC IdC) (IdC-String IdC)]
-           [(TypeStruct IdU) (string-append "struct "(IdU-String IdU))]
-           [(TypeUnion IdU) (string-append "union "(IdU-String IdU))]
-           [(TypeRef (TypeAny)) "void*"]
-           [(TypeRef Type) (string-append "("(Type->type Type)")*")]
-           [(TypeVoid) "void"]
-           [(TypeNat8) (S 'n8)]
-           [(TypeNat16) (S 'n16)]
-           [(TypeNat32) (S 'n32)]
-           [(TypeNat64) (S 'n64)]
-           [(TypeInt8) (S 'i8)]
-           [(TypeInt16) (S 'i16)]
-           [(TypeInt32) (S 'i32)]
-           [(TypeInt64) (S 'i64)]
-           [(TypeFloat) "float"]
-           [(TypeDouble) "double"]})]}})}
+           [(TypeArrow args result)
+            {let ([args (map %Type->type args)] [result (%Type->type result)] [s (gen-lfc-str)])
+              (cons
+               (append
+                (apply append (map {ann car (-> (Pairof (Listof String) String) (Listof String))} args))
+                (car result)
+                (list (string-append
+                       "typedef "(cdr result)" (*"s")("(string-add-between (map {ann cdr (-> (Pairof (Listof String) String) String)}
+                                                                                args) ",")");")))
+               s
+               )}]
+           [_
+            (cons
+             '()
+             {match t
+               [(TypeIdC IdC) (IdC-String IdC)]
+               [(TypeStruct IdU) (string-append "struct "(IdU-String IdU))]
+               [(TypeUnion IdU) (string-append "union "(IdU-String IdU))]
+               [(TypeRef (TypeAny)) "void*"]
+               [(TypeRef Type) (string-append "("(Type->type Type)")*")]
+               [(TypeVoid) "void"]
+               [(TypeNat8) (S 'n8)]
+               [(TypeNat16) (S 'n16)]
+               [(TypeNat32) (S 'n32)]
+               [(TypeNat64) (S 'n64)]
+               [(TypeInt8) (S 'i8)]
+               [(TypeInt16) (S 'i16)]
+               [(TypeInt32) (S 'i32)]
+               [(TypeInt64) (S 'i64)]
+               [(TypeFloat) "float"]
+               [(TypeDouble) "double"]})]}})}
   
-{: %R (-> (Setof String) (Listof String) (Listof String))}
-{define (%R s xs)
-  {cond
-    [(null? xs) '()]
-    [(set-member? s (car xs)) (%R s (cdr xs))]
-    [else (cons (car xs) (%R (set-add s (car xs)) (cdr xs)))]}}
-{: R (-> (Listof String) (Listof String))}
-{define (R xs) (%R (set) xs)}
-(string-append
- (apply string-append (R decls))
- (apply string-append (R globals))
- "int main(){"mains"return 0;}")
-}}
+    {: %R (-> (Setof String) (Listof String) (Listof String))}
+    {define (%R s xs)
+      {cond
+        [(null? xs) '()]
+        [(set-member? s (car xs)) (%R s (cdr xs))]
+        [else (cons (car xs) (%R (set-add s (car xs)) (cdr xs)))]}}
+    {: R (-> (Listof String) (Listof String))}
+    {define (R xs) (%R (set) xs)}
+    (string-append
+     (apply string-append (R decls))
+     (apply string-append (R globals))
+     "int main(){"mains"return 0;}")
+    }}
