@@ -49,6 +49,8 @@
   (TypeIdC [IdC : IdC])
   (TypeStruct [IdU : IdU])
   (TypeUnion [IdU : IdU])
+  (TypeRef [Type : Type])
+  (TypeAny)
   (TypeVoid)
   (TypeNat8)
   (TypeNat16)
@@ -162,6 +164,8 @@
                [(TypeIdC IdC) (IdC-String IdC)]
                [(TypeStruct IdU) (string-append "struct "(IdU-String IdU))]
                [(TypeUnion IdU) (string-append "union "(IdU-String IdU))]
+               [(TypeRef (TypeAny)) "void*"]
+               [(TypeRef Type) (string-append "("(Type->type Type)")*")]
                [(TypeVoid) "void"]
                [(TypeNat8) (S 'n8)]
                [(TypeNat16) (S 'n16)]
