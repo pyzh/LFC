@@ -32,6 +32,7 @@
 {struct Id ([addr : (Listof String)] [Symbol : Symbol]) #:transparent}
 {struct IdC ([String : String]) #:transparent}
 {define-type IdU (U Id IdC)}
+{define (IdU? x) (or (Id? x) (IdC? x))}
 
 {define-data Line
   (Return [Value : Value])
@@ -169,9 +170,16 @@
         [(DefUnion id tis) (raise 'WIP)]
         [(DefStruct id tis) (raise 'WIP)]}}
     {: Value->localdecls-locals-value (-> Value (List String String (Maybe String)))}
-    {define (Value->localdecls-locals-value l)
-      {cond
-        [else (raise 'WIP)]}}
+    {define (Value->localdecls-locals-value v)
+      {match v
+        [(? void?) (list "" "" #f)]
+        [(? IdU? v) (list "" "" (IdU-String v))]
+        [(Dot Value IdU)
+         {let ([i (IdU-String IdU)])
+           {match (Value->localdecls-locals-value Value)
+             [(list lds ls (? string? v)) (list lds ls (string-append "("v")."i))]}}]
+        [_ (raise 'WIP)]
+        }}
     {: Type->type (-> Type String)}
     {define (Type->type t) (cdr (%Type->type t))}
     {: %Type->type (-> Type (Pairof (Listof String) String))}
