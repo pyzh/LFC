@@ -59,6 +59,7 @@
   (TypeInt32)
   (TypeInt64)
   (TypeFloat)
+  (TypeDouble)
   }
 
 {define-type Value (U Void Left Apply (Pairof Value Line))}
@@ -105,6 +106,8 @@
   (make-immutable-hash
    (map {λ ([x : String]) {match (string-split x ":") [(list x y) (cons (string->symbol x) y)]}}
         (string-split (port->string (open-input-file "size.conf")) "\n")))}
+{: S (-> Symbol String)}
+{define (S n) (hash-ref size n)}
 {: compile (-> Line String)} 
 {define (compile l)
   {with-new-LFC-ID
@@ -132,8 +135,9 @@
         [(Line2 x y)
          {match* ((Line->localdecls-locals x) (Line->localdecls-locals x))
            [((list d0 l0) (list d1 l1)) (list (string-append d0 d1) (string-append l0 l1))]}]
-        [(DefVar Id Type Value) (raise 'WIP)]
-        [(DefVarGlobal Id Type Value) (raise 'WIP)]
+        [(DefVar Id Type Value) {let ([s (Id-String Id)] [a (Value->localdecls-locals-value Value)])
+                                  (list (string-append (Type->type Type)" "s";") (string-append s"="(raise 'WIP)))}]
+        [(DefVarGlobal IdU Type Value) (raise 'WIP)]
         [(Set! l v) (raise 'WIP)]
         [(DefFuncGlobal id f) (raise 'WIP)]
         [(DefUnion id tis) (raise 'WIP)]
@@ -150,7 +154,25 @@
        typedefs t
        {λ ()
          {match t
-           [_ (raise 'WIP)]}})}
+           [(TypeArrow args result) (raise 'WIP)];(TypeArrow [args : (Listof Type)] [result : Type])
+           [_
+            (cons
+             '()
+             {match t
+               [(TypeIdC IdC) (IdC-String IdC)]
+               [(TypeStruct IdU) (string-append "struct "(IdU-String IdU))]
+               [(TypeUnion IdU) (string-append "union "(IdU-String IdU))]
+               [(TypeVoid) "void"]
+               [(TypeNat8) (S 'n8)]
+               [(TypeNat16) (S 'n16)]
+               [(TypeNat32) (S 'n32)]
+               [(TypeNat64) (S 'n64)]
+               [(TypeInt8) (S 'i8)]
+               [(TypeInt16) (S 'i16)]
+               [(TypeInt32) (S 'i32)]
+               [(TypeInt64) (S 'i64)]
+               [(TypeFloat) "float"]
+               [(TypeDouble) "double"]})]}})}
   
     {: %R (-> (Setof String) (Listof String) (Listof String))}
     {define (%R s xs)
