@@ -178,6 +178,10 @@
          {let ([i (IdU-String IdU)])
            {match (Value->localdecls-locals-value Value)
              [(list lds ls (? string? v)) (list lds ls (string-append "("v")."i))]}}]
+        [(cons v l)
+         {let ([l (Line->localdecls-locals l)] [v (Value->localdecls-locals-value v)])
+           {match* (l v)
+             [((list dl ll) (list dv lv v)) (list (string-append dl dv) (string-append ll lv) v)]}}]
         [_ (raise 'WIP)]
         }}
     {: Type->type (-> Type String)}
