@@ -118,7 +118,7 @@
     {define decls '("")}
     {define globals '("")}
     {define mains ""}
-    {: structs (Mutable-HashTable IdU (List (Listof (U IdC TypeStruct)) (Listof String)))} ; id -> deps / global-lines
+    {: structs (Mutable-HashTable IdU (List (Listof Type) (Listof String)))} ; id -> deps / global-lines
     {define structs (make-hash)}
     {: typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; type -> decl / type
     {define typedefs (make-hash)}
@@ -229,7 +229,9 @@
     {match-define (list D L) (Line->localdecls-locals _L_)}
     {append! decls (list D)}
     {string-append! mains L}
-  
+
+(raise 'WIP) ; type/struct
+    
     {: %R (-> (Setof String) (Listof String) (Listof String))}
     {define (%R s xs)
       {cond
