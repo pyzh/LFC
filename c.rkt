@@ -182,8 +182,13 @@
          {let ([l (Line->localdecls-locals l)] [v (Value->localdecls-locals-value v)])
            {match* (l v)
              [((list dl ll) (list dv lv v)) (list (string-append dl dv) (string-append ll lv) v)]}}]
-        [_ (raise 'WIP)]
-        }}
+        [(Apply f xs)
+         {let ([f (Value->localdecls-locals-value f)] [xs (map Value->localdecls-locals-value xs)])
+           (list (string-append (first f) (apply string-append (map {ann first (-> (List String String (Maybe String)) String)} xs)))
+                 (string-append (second f) (apply string-append (map {ann second (-> (List String String (Maybe String)) String)} xs)))
+                 (string-append "("{cast (third f) String}")("
+                                (string-add-between {cast (map {ann third (-> (List String String (Maybe String)) (Maybe String))} xs) (Listof String)}
+                                                    ",")")"))}]}}
     {: Type->type (-> Type String)}
     {define (Type->type t) (cdr (%Type->type t))}
     {: %Type->type (-> Type (Pairof (Listof String) String))}
