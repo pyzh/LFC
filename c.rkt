@@ -112,7 +112,7 @@
 {: S (-> Symbol String)}
 {define (S n) (hash-ref size n)}
 {: compile (-> Line String)} 
-{define (compile l)
+{define (compile _L_)
   {with-new-LFC-ID
       '||
     {define decls '("")}
@@ -125,9 +125,6 @@
 
     {define-syntax-rule {append! x a} {set! x (append x a)}}
     {define-syntax-rule {string-append! x a} {set! x (string-append x a)}}
-
-  
-    (raise 'WIP)
 
     {: Line->localdecls-locals (-> Line (List String String))}
     {define (Line->localdecls-locals l)
@@ -228,6 +225,10 @@
                [(TypeInt64) (S 'i64)]
                [(TypeFloat) "float"]
                [(TypeDouble) "double"]})]}})}
+
+    {match-define (list D L) (Line->localdecls-locals _L_)}
+    {append! decls (list D)}
+    {string-append! mains L}
   
     {: %R (-> (Setof String) (Listof String) (Listof String))}
     {define (%R s xs)
