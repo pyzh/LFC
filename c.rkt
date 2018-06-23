@@ -118,8 +118,11 @@
     {define decls '("")}
     {define globals '("")}
     {define mains ""}
-    {: structs (Mutable-HashTable IdU (List (Listof Type) (Listof String)))} ; id -> deps / global-lines
-    {define structs (make-hash)}
+    {: structunions
+       (Mutable-HashTable
+        (Pairof (U 'struct 'union) IdU)
+        (List (Listof (Pairof (U 'struct 'union) IdU)) (Listof String)))} ; id -> deps / global-lines
+    {define structunions (make-hash)}
     {: typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; type -> decl / type
     {define typedefs (make-hash)}
 
@@ -164,8 +167,10 @@
            [((list ds ls (? string? l)) (list ds2 ls2 (? string? v)))
             (list (string-append ds ds2) (string-append ls ls2 l"="v";"))]}]
         [(DefFuncGlobal id f) (raise 'WIP)]
-        [(DefUnion id tis) (raise 'WIP)]
-        [(DefStruct id tis) (raise 'WIP)]}}
+        [(DefUnion id tis) (DUS 'union id tis) (list "" "")]
+        [(DefStruct id tis) (DUS 'struct id tis) (list "" "")]}}
+    {: DUS (-> (U 'struct 'union) IdU (Listof (Pairof Type IdU)) Void)}
+    {define DUS (raise 'WIP)}
     {: Value->localdecls-locals-value (-> Value (List String String (Maybe String)))}
     {define (Value->localdecls-locals-value v)
       {match v
