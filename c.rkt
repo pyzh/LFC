@@ -165,7 +165,19 @@
            [((list ds ls _) (list ds2 ls2 #f)) (list (string-append ds ds2) (string-append ls ls2))]
            [((list ds ls (? string? l)) (list ds2 ls2 (? string? v)))
             (list (string-append ds ds2) (string-append ls ls2 l"="v";"))]}]
-        [(DefFuncGlobal id f) (raise 'WIP)]
+        [(DefFuncGlobal id f);([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])
+         {match f
+           [(Func args result line)
+            {match (Line->localdecls-locals line)
+              [(list ds ls)
+               {let ([h
+                      (string-append
+                       (Type->type result)" "(IdU-String id)
+                       "("(string-add-between
+                           (map {λ ([x : (Pairof Type Id)]) (string-append (Type->type (car x))" "(Id-String (cdr x)))} args) ",")")")])
+                 {append! globals (list (string-append h"{"ds ls"}"))}
+                 {append! decls (list (string-append h";"))}}]}]}
+         (list "" "")]
         [(DefUnion id tis) (DUS 'union id tis) (list "" "")]
         [(DefStruct id tis) (DUS 'struct id tis) (list "" "")]}}
     {: DUS (-> (U 'struct 'union) IdU (Listof (Pairof Type IdU)) Void)}
