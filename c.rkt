@@ -126,6 +126,7 @@
     {define typedefs (make-hash)}
 
     {define-syntax-rule {append! x a} {set! x (append x a)}}
+    {define-syntax-rule {add-tail! x a} {append! x (list a)}}
     {define-syntax-rule {string-append! x a} {set! x (string-append x a)}}
 
     {: Line->localdecls-locals (-> Line (List String String))}
@@ -152,12 +153,12 @@
          {let ([s (IdU-String IdU)] [t (Type->type Type)])
            {match (Value->localdecls-locals-value Value)
              [(list lds ls a)
-              {append! decls (list lds)}
+              {add-tail! decls lds}
               {string-append! mains ls}
               (if (or (equal? t "void") (equal? a #f))
                   (void)
                   {begin
-                    {append! decls (list (string-append t" "s";"))}
+                    {add-tail! decls (string-append t" "s";")}
                     {string-append! mains (string-append s"="a)}})
               (list "" "")]}}]
         [(Set! l v)
@@ -175,8 +176,8 @@
                        (Type->type result)" "(IdU-String id)
                        "("(string-add-between
                            (map {λ ([x : (Pairof Type Id)]) (string-append (Type->type (car x))" "(Id-String (cdr x)))} args) ",")")")])
-                 {append! globals (list (string-append h"{"ds ls"}"))}
-                 {append! decls (list (string-append h";"))}}]}]}
+                 {add-tail! globals (string-append h"{"ds ls"}")}
+                 {add-tail! decls (string-append h";")}}]}]}
          (list "" "")]
         [(DefUnion id tis) (DUS 'union id tis) (list "" "")]
         [(DefStruct id tis) (DUS 'struct id tis) (list "" "")]}}
@@ -265,7 +266,7 @@
                [(TypeDouble) "double"]})]}})}
 
     {match-define (list D L) (Line->localdecls-locals _L_)}
-    {append! decls (list D)}
+    {add-tail! decls D}
     {string-append! mains L}
 
     {set!
