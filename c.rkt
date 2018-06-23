@@ -111,7 +111,7 @@
         (string-split (port->string (open-input-file "size.conf")) "\n")))}
 {: S (-> Symbol String)}
 {define (S n) (hash-ref size n)}
-{: compile (-> Line String)} 
+{: compile (-> Line String)}
 {define (compile _L_)
   {with-new-LFC-ID
       '||
@@ -280,8 +280,11 @@
 
     {: SU->G (-> SU (Listof String))}
     {define (SU->G k)
-      {match (hash-ref SUs k)
-        [(list deps ss) (append (apply append (map SU->G deps)) (list ss))]}}
+      (if (hash-has-key? SUs k)
+          {match (hash-ref SUs k)
+            [(list deps ss) (append (apply append (map SU->G deps)) (list ss))]}
+          {match k
+            [(list t (? IdC? id)) (list (string-append (symbol->string t)" "(IdC-String id)";"))]})}
     {set! globals (append (apply append (map SU->G (hash-keys SUs))) globals)}
     
     {: %R (-> (Setof String) (Listof String) (Listof String))}
