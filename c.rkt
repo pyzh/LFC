@@ -296,3 +296,11 @@
      (apply string-append (R (append decls globals)))
      "int main(){"mains"return 0;}")
     }}
+
+
+{define-type CExp
+  (U
+   {Refine [x : Symbol] (not (: x '!))}
+   (Pairof CExp (Listof CExp))
+   (Pairof '! (Pairof CExp (Listof CExp)))
+   )}
