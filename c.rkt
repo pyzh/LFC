@@ -118,11 +118,10 @@
     {define decls '("")}
     {define globals '("")}
     {define mains ""}
-    {: structunions
-       (Mutable-HashTable
-        (Pairof (U 'struct 'union) IdU)
-        (Pairof (Listof (Pairof (U 'struct 'union) IdU)) String))} ; id -> deps / global-line
-    {define structunions (make-hash)}
+    {define-type SU (Pairof (U 'struct 'union) IdU)}
+    {: SUs (Mutable-HashTable SU (Pairof (Listof SU) String))}
+    ; id -> deps / global-line
+    {define SUs (make-hash)}
     {: typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; type -> decl / type
     {define typedefs (make-hash)}
 
@@ -172,9 +171,9 @@
     {: DUS (-> (U 'struct 'union) IdU (Listof (Pairof Type IdU)) Void)}
     {define (DUS t idu tis)
       {define k (cons t idu)}
-      (assert (not (hash-has-key? structunions k)))
+      (assert (not (hash-has-key? SUs k)))
       {hash-set!
-       structunions k
+       SUs k
        (cons
         (apply append (map {λ ([x : (Pairof Type IdU)]) (DUS%Type->D (car x))} tis))
         (string-append
@@ -183,7 +182,7 @@
                 (map {λ ([x : (Pairof Type IdU)])
                        (string-append (Type->type (car x))" "(IdU-String (cdr x))";")} tis))
          "}"))}}
-    {: DUS%Type->D (-> Type (Listof (Pairof (U 'struct 'union) IdU)))}
+    {: DUS%Type->D (-> Type (Listof SU))}
     {define DUS%Type->D
       {match-lambda
         [(TypeStruct IdU) (list (cons 'struct IdU))]
@@ -257,7 +256,6 @@
     {append! decls (list D)}
     {string-append! mains L}
 
-
     {set!
      decls
      (append
@@ -265,9 +263,13 @@
        append
        (map {ann cadr (-> (Pairof Type (Pairof (Listof String) String)) (Listof String))} (hash->list typedefs)))
       decls)}
-    
-    
-    (raise 'WIP) ; struct
+
+
+    {: SU->G (-> SU (Listof String))}
+    {define (SU->G k)
+      {match (hash-ref SUs k)
+        [(list deps ss) (append (apply append (map SU->G deps)) (list ss))]}}
+    {set! globals (append (apply append (map SU->G (hash-keys SUs))) globals)}
     
     {: %R (-> (Setof String) (Listof String) (Listof String))}
     {define (%R s xs)
@@ -278,7 +280,6 @@
     {: R (-> (Listof String) (Listof String))}
     {define (R xs) (%R (set) xs)}
     (string-append
-     (apply string-append (R decls))
-     (apply string-append (R globals))
+     (apply string-append (R (append decls globals)))
      "int main(){"mains"return 0;}")
     }}
