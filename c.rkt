@@ -40,7 +40,7 @@
   (DefVar [Id : Id] [Type : Type] [Value : Value])
   (DefVarGlobal [IdU : IdU] [Type : Type] [Value : Value])
   (Set! [Left : Left] [Value : Value])
-  (DefFuncGlobal [IdU : IdU] [Func : Func])
+  (DefFunc [IdU : IdU] [Func : Func])
   (DefUnion [IdU : IdU] [List : (Listof (Pairof Type IdU))])
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
 {struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])}
@@ -165,7 +165,7 @@
            [((list ds ls _) (list ds2 ls2 #f)) (list (string-append ds ds2) (string-append ls ls2))]
            [((list ds ls (? string? l)) (list ds2 ls2 (? string? v)))
             (list (string-append ds ds2) (string-append ls ls2 l"="v";"))]}]
-        [(DefFuncGlobal id f);([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])
+        [(DefFunc id f);([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])
          {match f
            [(Func args result line)
             {match (Line->localdecls-locals line)
