@@ -121,7 +121,7 @@
     {: structunions
        (Mutable-HashTable
         (Pairof (U 'struct 'union) IdU)
-        (List (Listof (Pairof (U 'struct 'union) IdU)) (Listof String)))} ; id -> deps / global-lines
+        (Pairof (Listof (Pairof (U 'struct 'union) IdU)) String))} ; id -> deps / global-line
     {define structunions (make-hash)}
     {: typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; type -> decl / type
     {define typedefs (make-hash)}
@@ -170,7 +170,25 @@
         [(DefUnion id tis) (DUS 'union id tis) (list "" "")]
         [(DefStruct id tis) (DUS 'struct id tis) (list "" "")]}}
     {: DUS (-> (U 'struct 'union) IdU (Listof (Pairof Type IdU)) Void)}
-    {define DUS (raise 'WIP)}
+    {define (DUS t idu tis)
+      {define k (cons t idu)}
+      (assert (not (hash-has-key? structunions k)))
+      {hash-set!
+       structunions k
+       (cons
+        (apply append (map {λ ([x : (Pairof Type IdU)]) (DUS%Type->D (car x))} tis))
+        (string-append
+         (symbol->string t)" "(IdU-String idu)"{"
+         (apply string-append
+                (map {λ ([x : (Pairof Type IdU)])
+                       (string-append (Type->type (car x))" "(IdU-String (cdr x))";")} tis))
+         "}"))}}
+    {: DUS%Type->D (-> Type (Listof (Pairof (U 'struct 'union) IdU)))}
+    {define DUS%Type->D
+      {match-lambda
+        [(TypeStruct IdU) (list (cons 'struct IdU))]
+        [(TypeUnion IdU) (list (cons 'union IdU))]
+        [_ '()]}}
     {: Value->localdecls-locals-value (-> Value (List String String (Maybe String)))}
     {define (Value->localdecls-locals-value v)
       {match v
