@@ -234,7 +234,17 @@
     {append! decls (list D)}
     {string-append! mains L}
 
-    (raise 'WIP) ; type/struct
+
+    {set!
+     decls
+     (append
+      (apply
+       append
+       (map {ann cadr (-> (Pairof Type (Pairof (Listof String) String)) (Listof String))} (hash->list typedefs)))
+      decls)}
+    
+    
+    (raise 'WIP) ; struct
     
     {: %R (-> (Setof String) (Listof String) (Listof String))}
     {define (%R s xs)
