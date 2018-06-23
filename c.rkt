@@ -194,6 +194,12 @@
        typedefs t
        {λ ()
          {match t
+           [(TypeStruct IdU)
+            {let ([s (string-append "struct "(IdU-String IdU))])
+              (cons (list (string-append s";")) s)}]
+           [(TypeUnion IdU)
+            {let ([s (string-append "union "(IdU-String IdU))])
+              (cons (list (string-append s";")) s)}]
            [(TypeArrow args result)
             {let ([args (map %Type->type args)] [result (%Type->type result)] [s (gen-lfc-str)])
               (cons
@@ -210,8 +216,6 @@
              '()
              {match t
                [(TypeIdC IdC) (IdC-String IdC)]
-               [(TypeStruct IdU) (string-append "struct "(IdU-String IdU))]
-               [(TypeUnion IdU) (string-append "union "(IdU-String IdU))]
                [(TypeRef (TypeAny)) "void*"]
                [(TypeRef Type) (string-append "("(Type->type Type)")*")]
                [(TypeVoid) "void"]
@@ -230,7 +234,7 @@
     {append! decls (list D)}
     {string-append! mains L}
 
-(raise 'WIP) ; type/struct
+    (raise 'WIP) ; type/struct
     
     {: %R (-> (Setof String) (Listof String) (Listof String))}
     {define (%R s xs)
