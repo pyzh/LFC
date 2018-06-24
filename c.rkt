@@ -36,6 +36,7 @@
 {define (IdU? x) (or (Id? x) (IdC? x))}
 
 {define-data Line
+  (Apply [f : Value] [Values : (Listof Value)])
   (Return [Value : Value])
   (Line2 [x : Line] [y : Line])
   (DefVar [Id : Id] [Type : Type] [Value : Value])
@@ -68,7 +69,6 @@
 
 {define-type Value (U Void Left Apply (Pairof Value Line))}
 {define-type Left (U IdU Dot (Pairof Left Line))}
-{record Apply ([f : Value] [Values : (Listof Value)])}
 {record Dot ([Value : Value] [IdU : IdU])}
 
 {define c 0}
@@ -133,6 +133,7 @@
     {: Line->localdecls-locals (-> Line (List String String))}
     {define (Line->localdecls-locals l)
       {match l
+        [(? Apply? v) {match (Value->localdecls-locals-value v) [(list d l (? string? v)) (list d (string-append l v";"))]}]
         [(Return x)
          {match (Value->localdecls-locals-value x)
            [(list d l v)
