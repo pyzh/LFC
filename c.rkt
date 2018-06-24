@@ -284,8 +284,7 @@
       (if (hash-has-key? SUs k)
           {match (hash-ref SUs k)
             [(list deps ss) (append (apply append (map SU->G deps)) (list ss))]}
-          {match k
-            [(list t (? IdC? id)) (list (string-append (symbol->string t)" "(IdC-String id)";"))]})}
+          '())}
     {set! globals (append (apply append (map SU->G (hash-keys SUs))) globals)}
     
     {: %R (-> (Setof String) (Listof String) (Listof String))}
