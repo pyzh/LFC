@@ -36,8 +36,11 @@
 {define (IdU? x) (or (Id? x) (IdC? x))}
 
 {define-data Line
+  (LineNothing)
   (Apply [f : Value] [Values : (Listof Value)])
   (Return [Value : Value])
+  (If [Value : Value] [t : Line] [f : Line])
+  (While [Value : Value] [Line : Line])
   (Line2 [x : Line] [y : Line])
   (DefVar [Id : Id] [Type : Type] [Value : Value])
   (DefVarGlobal [IdU : IdU] [Type : Type] [Value : Value])
@@ -133,6 +136,7 @@
     {: Line->localdecls-locals (-> Line (List String String))}
     {define (Line->localdecls-locals l)
       {match l
+        [(LineNothing) (list "" "")]
         [(? Apply? v) {match (Value->localdecls-locals-value v) [(list d l (? string? v)) (list d (string-append l v";"))]}]
         [(Return x)
          {match (Value->localdecls-locals-value x)
@@ -140,6 +144,14 @@
             (if (false? v)
                 (list d (string-append l "return;"))
                 (list d (string-append l "return "v";")))]}]
+        [(If v t f)
+         {match* ((Value->localdecls-locals-value v) (Line->localdecls-locals t) (Line->localdecls-locals f))
+           [((list dv lv (? string? v)) (list dt lt) (list df lf))
+            (list "" (string-append "if(({"dv lv v";})){"dt lt"}else{"df lf"}"))]}]
+        [(While v l)
+         {match* ((Value->localdecls-locals-value v) (Line->localdecls-locals l))
+           [((list dv lv (? string? v)) (list d l))
+            (list "" (string-append "while(({"dv lv v"})){"d l"}"))]}]
         [(Line2 x y)
          {match* ((Line->localdecls-locals x) (Line->localdecls-locals x))
            [((list d0 l0) (list d1 l1)) (list (string-append d0 d1) (string-append l0 l1))]}]
