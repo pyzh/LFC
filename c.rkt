@@ -14,23 +14,24 @@
 ;    You should have received a copy of the GNU Affero General Public License
 ;    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #lang typed/racket #:with-refinements
+{define-syntax-rule {record x ...} {struct x ... #:transparent}}
 {define-syntax define-data
   {syntax-rules ()
     [(_ (t c ...) (ons f ...) ...)
      {begin
-       {struct (c ...) ons (f ...) #:transparent} ...
+       {record (c ...) ons (f ...)} ...
        {define-type (t c ...) (U (ons c ...) ...)}}]
     [(_ t (ons f ...) ...)
      {begin
-       {struct ons (f ...) #:transparent} ...
+       {record ons (f ...)} ...
        {define-type t (U ons ...)}}]}}
 {define-type (Maybe a) (U a False)}
 {define-type (Map k v) (Immutable-HashTable k v)}
 {: string-add-between (-> (Listof String) String String)}
 {define (string-add-between xs a) (apply string-append (add-between xs a))}
 
-{struct Id ([addr : (Listof String)] [Symbol : Symbol]) #:transparent}
-{struct IdC ([String : String]) #:transparent}
+{record Id ([addr : (Listof String)] [Symbol : Symbol])}
+{record IdC ([String : String])}
 {define-type IdU (U Id IdC)}
 {define (IdU? x) (or (Id? x) (IdC? x))}
 
@@ -67,8 +68,8 @@
 
 {define-type Value (U Void Left Apply (Pairof Value Line))}
 {define-type Left (U IdU Dot (Pairof Left Line))}
-{struct Apply ([f : Value] [Values : (Listof Value)]) #:transparent}
-{struct Dot ([Value : Value] [IdU : IdU]) #:transparent}
+{record Apply ([f : Value] [Values : (Listof Value)])}
+{record Dot ([Value : Value] [IdU : IdU])}
 
 {define c 0}
 {define (gen-lfc-str)
