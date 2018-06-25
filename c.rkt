@@ -14,6 +14,10 @@
 ;    You should have received a copy of the GNU Affero General Public License
 ;    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #lang typed/racket #:with-refinements
+{require (only-in typed/racket [map %map])}
+{: map {All (a b) (-> (-> a b) (Listof a) (Listof b))}}
+{define (map f xs)
+  ({ann %map {All (c a b ...) (-> (-> a b ... b c) (Listof a) (Listof b) ... b (Listof c))}} f xs)}
 {define-syntax-rule {record x ...} {struct x ... #:transparent}}
 {define-syntax define-data
   {syntax-rules ()
@@ -45,6 +49,7 @@
   (DefVar [Id : Id] [Type : Type] [Value : Value])
   (DefVarGlobal [IdU : IdU] [Type : Type] [Value : Value])
   (Set! [Left : Left] [Value : Value])
+  (DefEnum [IdU : IdU] [List : (Listof (Pairof Integer IdU))])
   (DefFunc [IdU : IdU] [Func : Func])
   (DefUnion [IdU : IdU] [List : (Listof (Pairof Type IdU))])
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
@@ -119,6 +124,7 @@
 {define (compile _L_)
   {with-new-LFC-ID
       '||
+    {define heads '("")}
     {define decls '("")}
     {define globals '("")}
     {define mains ""}
@@ -175,6 +181,15 @@
                     {add-tail! decls (string-append t" "s";")}
                     {string-append! mains (string-append s"="a)}})
               (list "" "")]}}]
+        [(DefEnum n xs)
+         {define s (IdU-String n)}
+         {add-tail!
+          heads
+          (string-append
+           "typedef enum "s"{"(string-add-between (map {λ ([x : (Pairof Integer IdU)])
+                                                         (string-append (IdU-String (cdr x))"="(number->string (car x)))} xs) ",")
+           "}"s";")}
+         (list "" "")]
         [(Set! l v)
          {match* ((Value->localdecls-locals-value l) (Value->localdecls-locals-value v))
            [((list ds ls _) (list ds2 ls2 #f)) (list (string-append ds ds2) (string-append ls ls2))]
@@ -197,18 +212,18 @@
         [(DefStruct id tis) (DUS 'struct id tis) (list "" "")]}}
     {: DUS (-> (U 'struct 'union) IdU (Listof (Pairof Type IdU)) Void)}
     {define (DUS t idu tis)
-      {define k (cons t idu)}
-      (assert (not (hash-has-key? SUs k)))
-      {hash-set!
-       SUs k
-       (cons
-        (apply append (map {λ ([x : (Pairof Type IdU)]) (DUS%Type->D (car x))} tis))
-        (string-append
-         (symbol->string t)" "(IdU-String idu)"{"
-         (apply string-append
-                (map {λ ([x : (Pairof Type IdU)])
-                       (string-append (Type->type (car x))" "(IdU-String (cdr x))";")} tis))
-         "}"))}}
+      {let ([is (IdU-String idu)] [k (cons t idu)])
+        (assert (not (hash-has-key? SUs k)))
+        {hash-set!
+         SUs k
+         (cons
+          (apply append (map {λ ([x : (Pairof Type IdU)]) (DUS%Type->D (car x))} tis))
+          (string-append
+           "typedef "(symbol->string t)" "is"{"
+           (apply string-append
+                  (map {λ ([x : (Pairof Type IdU)])
+                         (string-append (Type->type (car x))" "(IdU-String (cdr x))";")} tis))
+           "}"is";"))}}}
     {: DUS%Type->D (-> Type (Listof SU))}
     {define DUS%Type->D
       {match-lambda
