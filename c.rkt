@@ -17,7 +17,7 @@
 {require (only-in typed/racket [map %map])}
 {: map {All (a b) (-> (-> a b) (Listof a) (Listof b))}}
 {define (map f xs)
-  ({ann %map {All (c a b ...) (-> (-> a b ... b c) (Listof a) (Listof b) ... b (Listof c))}} f xs)}
+  (%map f xs)}
 {define-syntax-rule {record x ...} {struct x ... #:transparent}}
 {define-syntax define-data
   {syntax-rules ()
