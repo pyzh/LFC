@@ -350,9 +350,9 @@
 {record PFunc ()} ; WIP
 {define-type PType (U TypePrim)} ; WIP
 {define-type PId (U IdU Symbol)}
-{define-data (PValue i)
+{define-data PValue
   (PValueVoid)
-  (PValueType [PValue : (PValue i)] [PType : PType])
+  (PValueType [PValue : PValue] [PType : PType])
   (PApply [PValueFunc : PValueFunc] [List : (Listof PValue)])
   (PValueFunc [args : (Listof (Pairof PType PId))] [result : PType] [PValue : PValue])
   (PDot [PValue : PValue] [PId : PId])
