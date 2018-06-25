@@ -55,6 +55,9 @@
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
 {struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])}
 
+{define-type TypePrim (U TypeAny TypeVoid TypeNat8 TypeNat16 TypeNat32 TypeNat64
+                         TypeInt8 TypeInt16 TypeInt32 TypeInt64
+                         TypeFloat TypeDouble)}
 {define-data Type
   (TypeArrow [args : (Listof Type)] [result : Type])
   (TypeIdC [IdC : IdC])
@@ -336,4 +339,23 @@
    (Pairof CExp (Listof CExp))
    (Pairof '! (Pairof CExp (Listof CExp)))
    )}
+;P 預
+
+;{define-type Value (U Void Left Apply (Pairof Value Line))}
+;{define-type Left (U IdU Dot (Pairof Left Line))}
+;{record Dot ([Value : Value] [IdU : IdU])}
+;{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])}
+
+{record PVal ()} ; WIP
+{record PFunc ()} ; WIP
+{define-type PType (U TypePrim)} ; WIP
+{define-type PId (U IdU Symbol)}
+{define-data (PValue i)
+  (PValueVoid)
+  (PValueType [PValue : (PValue i)] [PType : PType])
+  (PApply [PValueFunc : PValueFunc] [List : (Listof PValue)])
+  (PValueFunc [args : (Listof (Pairof PType PId))] [result : PType] [PValue : PValue])
+  (PDot [PValue : PValue] [PId : PId])
+  ;WIP
+  }
 
