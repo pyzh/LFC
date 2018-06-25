@@ -324,7 +324,7 @@
     {: R (-> (Listof String) (Listof String))}
     {define (R xs) (%R (set) xs)}
     (string-append
-     (apply string-append (R (append decls globals)))
+     (apply string-append (R (append heads decls globals)))
      "int main(){"mains"return 0;}")
     }}
 
