@@ -316,7 +316,9 @@
 
 {define-type CExp
   (U
+   String
    {Refine [x : Symbol] (not (: x '!))}
    (Pairof CExp (Listof CExp))
    (Pairof '! (Pairof CExp (Listof CExp)))
    )}
+
