@@ -14,10 +14,6 @@
 ;    You should have received a copy of the GNU Affero General Public License
 ;    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #lang typed/racket #:with-refinements
-{require (only-in typed/racket [map %map])}
-{: map {All (a b) (-> (-> a b) (Listof a) (Listof b))}}
-{define (map f xs)
-  (%map f xs)}
 {define-syntax-rule {record x ...} {struct x ... #:transparent}}
 {define-syntax define-data
   {syntax-rules ()
@@ -338,4 +334,21 @@
    (Pairof CExp (Listof CExp))
    (Pairof '! (Pairof CExp (Listof CExp)))
    )}
-;--
+{: Type.unify (-> Type Type Type)}
+{define (Type.unify t1 t2)
+  {cond
+    [(TypeUnknown? t1) t2]
+    [(TypeUnknown? t2) t1]
+    [else
+     {match t1
+       [(TypeUnknown) t2]
+       [(TypeArrow args result)
+        {match t2
+          [(TypeArrow args2 result2)
+           (assert (= (length args args2)))
+           (TypeArrow (map Type.unify args args2) (Type.unify result result2))]}]
+       [(TypeRef a)
+        {match t2
+          [(TypeRef b)
+           (TypeRef (Type.unify a b))]}]
+       [_ (assert (equal? t1 t2)) t1]}]}}
