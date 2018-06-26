@@ -53,7 +53,7 @@
                          TypeInt8 TypeInt16 TypeInt32 TypeInt64
                          TypeFloat TypeDouble)}
 {define-data Type
-  (TypeArrow [args : (Listof Type)] [result : Type])
+  (TypeArrow [args : (Maybe (Listof Type))] [result : Type]) ; Maybe=>類型推導
   (TypeIdC [IdC : IdC])
   (TypeStruct [IdU : IdU])
   (TypeUnion [IdU : IdU])
@@ -262,7 +262,7 @@
            [(TypeUnion IdU)
             {let ([s (string-append "union "(IdU-String IdU))])
               (cons (list (string-append s";")) s)}]
-           [(TypeArrow args result)
+           [(TypeArrow (? list? args) result)
             {let ([args (map %Type->type args)] [result (%Type->type result)] [s (gen-lfc-str)])
               (cons
                (append
@@ -341,14 +341,39 @@
     [(TypeUnknown? t2) t1]
     [else
      {match t1
-       [(TypeUnknown) t2]
        [(TypeArrow args result)
         {match t2
           [(TypeArrow args2 result2)
-           (assert (= (length args args2)))
-           (TypeArrow (map Type.unify args args2) (Type.unify result result2))]}]
+           {cond
+             [(false? args) (TypeArrow args2 (Type.unify result result2))]
+             [(false? args2) (TypeArrow args (Type.unify result result2))]
+             [else
+           (assert (= (length args) (length args2)))
+           (TypeArrow (map Type.unify args args2) (Type.unify result result2))]}]}]
        [(TypeRef a)
         {match t2
           [(TypeRef b)
            (TypeRef (Type.unify a b))]}]
        [_ (assert (equal? t1 t2)) t1]}]}}
+{define-type Tbinds (Mutable-HashTable IdU Type)}
+{: Tbinds.add! (-> Tbinds IdU Type Void)}
+{define (Tbinds.add! b i t)
+  (hash-update!	b i {λ ([x : Type]) (Type.unify x t)} TypeUnknown)}
+{: Tbinds.Value! (-> Tbinds Value Value)}
+{define (Tbinds.Value! b v)
+  {match v
+    [(Apply f xs) (Apply (Tbinds.Value! b f) (map {λ ([x : Value]) (Tbinds.Value! b x)} xs))]
+    [(cons v l) (raise 'WIP)]
+    [(Ann v t) (Tbinds.Value%Ann! b v t)]
+    [(or (? IdU?) (? void?)) v]
+    [(Dot v i) (Dot (Tbinds.Value! b v) i)]}}
+{define Func:Type (TypeArrow #f (TypeUnknown))}
+{: Tbinds.Value%Ann! (-> Tbinds Value Type Value)}
+{define (Tbinds.Value%Ann! b v t)
+  {match v
+    [(? IdU?) (Tbinds.add! b v t)]
+    [(Apply f xs)
+     {let ([t (Type.unify Func:Type t)])
+       (raise 'WIP)}]
+    [_ (raise 'WIP)]}}
+
