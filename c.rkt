@@ -74,10 +74,12 @@
   (TypeInt64)
   (TypeFloat)
   (TypeDouble)
+  (TypeUnknown) ; 類型推導
   }
-{define-type Value (U Void Left Apply (Pairof Value Line))}
+{define-type Value (U Void Left Apply (Pairof Value Line) Ann)}
 {define-type Left (U IdU Dot (Pairof Left Line))}
 {record Dot ([Value : Value] [IdU : IdU])}
+{record Ann ([Value : Value] [Type : Type])} ; 類型推導
 
 {define c 0}
 {define (gen-lfc-str)
