@@ -336,11 +336,19 @@
    (Pairof CExp (Listof CExp))
    (Pairof '! (Pairof CExp (Listof CExp)))
    )}
-{define-type Tbinds (Pairof (Mutable-HashTable IdU Type)
-                            (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)))}
+{define-type Tbinds
+  (List (Mutable-HashTable IdU Type) ;值的類型
+        (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)) ;確定的struct/union的成員的類型
+        (Boxof (Listof (List Type IdU Type))))} ;不確定的struct/union的成員的類型
+{define TU (TypeUnknown #f)}
+{: Tbinds.su-add! (-> Tbinds (U TypeStruct TypeUnion) IdU Type Void)}
+{define (Tbinds.su-add! B t i f)
+  (hash-update!
+   (hash-ref! (second B) t {λ () {ann (make-hash) (Mutable-HashTable IdU Type)}})
+   i {λ ([x : Type]) (Tbinds.unify! B x f)} {λ () TU})}
 {: Tbinds.add! (-> Tbinds IdU Type Void)}
 {define (Tbinds.add! B i t)
-  (hash-update!	(car B) i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () (TypeUnknown #f)})}
+  (hash-update!	(car B) i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () TU})}
 {:  Tbinds.unify! (-> Tbinds Type Type Type)}
 {define (Tbinds.unify! B t1 t2)
   {match t1
@@ -394,8 +402,12 @@
        (Tbinds.Value%Ann! B v nt)}]
     [(? void?) (Tbinds.unify! B (TypeVoid) t) v]
     [(Dot v i)
-     {let ([v (Tbinds.Value%Ann! B v (TypeSU))])
-       (raise 'WIP)}]}}
+     {let ([s (Tbinds.var! B)])
+       {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeSU) t))] [si {match s [(TypeUnknown (? IdU? i)) i]}])
+         {let ([s (hash-ref (car B) si)])
+           {match s
+             [(or (TypeStruct _) (TypeUnion _)) (Tbinds.su-add! B s i t)]
+             [_ (raise 'WIP)]}}}}]}}
 {: Tbinds.Line! (-> Tbinds Line Line)}
 {define (Tbinds.Line! B l) (raise 'WIP)}
 
