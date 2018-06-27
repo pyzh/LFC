@@ -393,7 +393,9 @@
      {let ([nt (Tbinds.unify! B t t2)])
        (Tbinds.Value%Ann! B v nt)}]
     [(? void?) (Tbinds.unify! B (TypeVoid) t) v]
-    [(Dot v i) (raise 'WIP)]}}
+    [(Dot v i)
+     {let ([v (Tbinds.Value%Ann! v (TypeSU))])
+       (raise 'WIP)}]}}
 {: Tbinds.Line! (-> Tbinds Line Line)}
 {define (Tbinds.Line! B l) (raise 'WIP)}
 
