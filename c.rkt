@@ -73,7 +73,8 @@
   (TypeUnknown [IdU : (Maybe IdU)]) ; 類型推導
   (TypeSU) ; 類型推導
   }
-{define-type Value (U Void Left Apply (Pairof Value Line) Ann)}
+{define-type Value (U Void Left Apply Value+Line Ann)}
+{record Value+Line ([Value : Value] [Line : Line])}
 {define-type Left (U IdU Dot (Pairof Left Line))}
 {record Dot ([Value : Value] [IdU : IdU])}
 {record Ann ([Value : Value] [Type : Type])} ; 類型推導
@@ -238,7 +239,7 @@
          {let ([i (IdU-String IdU)])
            {match (Value->localdecls-locals-value Value)
              [(list lds ls (? string? v)) (list lds ls (string-append "("v")."i))]}}]
-        [(cons v l)
+        [(Value+Line v l)
          {let ([l (Line->localdecls-locals l)] [v (Value->localdecls-locals-value v)])
            {match* (l v)
              [((list dl ll) (list dv lv v)) (list (string-append dl dv) (string-append ll lv) v)]}}]
@@ -378,7 +379,7 @@
 {define (Tbinds.Value! B v)
   {match v
     [(Apply f xs) (Apply (Tbinds.Value! B f) (map {λ ([x : Value]) (Tbinds.Value! B x)} xs))]
-    [(cons v l) (raise 'WIP)]
+    [(Value+Line v l) (raise 'WIP)]
     [(Ann v t) (Tbinds.Value%Ann! B v t)]
     [(or (? IdU?) (? void?)) v]
     [(Dot v i) (Dot (Tbinds.Value! B v) i)]}}
