@@ -71,6 +71,7 @@
   (TypeFloat)
   (TypeDouble)
   (TypeUnknown [IdU : (Maybe IdU)]) ; 類型推導
+  (TypeSU) ; 類型推導
   }
 {define-type Value (U Void Left Apply (Pairof Value Line) Ann)}
 {define-type Left (U IdU Dot (Pairof Left Line))}
@@ -349,9 +350,12 @@
            (Tbinds.add! B i t2)
            t2})]
     [_
-     {cond
-       [(TypeUnknown? t2) (Tbinds.unify! B t2 t1)]
-       [else
+     {match t2
+       [(TypeUnknown _) (Tbinds.unify! B t2 t1)]
+       [(TypeSU)
+        {match t1
+          [(or (TypeStruct _) (TypeUnion _) (TypeSU)) t1]}]
+       [_
         {match t1
           [(TypeArrow args result)
            {match t2
@@ -366,6 +370,9 @@
            {match t2
              [(TypeRef r)
               (TypeRef (Tbinds.unify! B a r))]}]
+          [(TypeSU)
+           {match t2
+             [(or (TypeStruct _) (TypeUnion _) (TypeSU)) t2]}]
           [_ (assert (equal? t1 t2)) t1]}]}]}}
 {: Tbinds.Value! (-> Tbinds Value Value)}
 {define (Tbinds.Value! B v)
