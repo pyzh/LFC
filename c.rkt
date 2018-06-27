@@ -336,17 +336,18 @@
    (Pairof CExp (Listof CExp))
    (Pairof '! (Pairof CExp (Listof CExp)))
    )}
-{define-type Tbinds (Mutable-HashTable IdU Type)}
+{define-type Tbinds (Pairof (Mutable-HashTable IdU Type)
+                            (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)))}
 {: Tbinds.add! (-> Tbinds IdU Type Void)}
 {define (Tbinds.add! B i t)
-  (hash-update!	B i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () (TypeUnknown #f)})}
+  (hash-update!	(car B) i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () (TypeUnknown #f)})}
 {:  Tbinds.unify! (-> Tbinds Type Type Type)}
 {define (Tbinds.unify! B t1 t2)
   {match t1
     [(TypeUnknown #f) t2]
     [(TypeUnknown (? IdU? i))
-     (if (hash-has-key? B i)
-         (Tbinds.unify! B t2 (hash-ref B i))
+     (if (hash-has-key? (car B) i)
+         (Tbinds.unify! B t2 (hash-ref (car B) i))
          {begin
            (Tbinds.add! B i t2)
            t2})]
@@ -391,7 +392,7 @@
     [(Ann v t2)
      {let ([nt (Tbinds.unify! B t t2)])
        (Tbinds.Value%Ann! B v nt)}]
-    [(? void?) (Tbinds.unify! B TypeVoid t) v]
+    [(? void?) (Tbinds.unify! B (TypeVoid) t) v]
     [(Dot v i) (raise 'WIP)]}}
 {: Tbinds.Line! (-> Tbinds Line Line)}
 {define (Tbinds.Line! B l) (raise 'WIP)}
