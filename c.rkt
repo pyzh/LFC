@@ -375,21 +375,25 @@
            {match t2
              [(or (TypeStruct _) (TypeUnion _) (TypeSU)) t2]}]
           [_ (assert (equal? t1 t2)) t1]}]}]}}
+{: Tbinds.var! (-> Tbinds TypeUnknown)}
+{define (Tbinds.var! B) (TypeUnknown (IdC (symbol->string (gensym))))}
 {: Tbinds.Value! (-> Tbinds Value Value)}
 {define (Tbinds.Value! B v)
   {match v
     [(Apply f xs) (Apply (Tbinds.Value! B f) (map {λ ([x : Value]) (Tbinds.Value! B x)} xs))]
-    [(Value+Line v l) (raise 'WIP)]
+    [(Value+Line v l) (Value+Line (Tbinds.Value! B v) (Tbinds.Line! B l))]
     [(Ann v t) (Tbinds.Value%Ann! B v t)]
     [(or (? IdU?) (? void?)) v]
     [(Dot v i) (Dot (Tbinds.Value! B v) i)]}}
-{define Func:Type (TypeArrow #f (TypeUnknown #f))}
 {: Tbinds.Value%Ann! (-> Tbinds Value Type Value)}
 {define (Tbinds.Value%Ann! B v t)
   {match v
     [(? IdU?) (Tbinds.add! B v t)]
     [(Apply f xs)
-     {let ([t (Tbinds.unify! B Func:Type t)])
-       (raise 'WIP)}]
+     {let ([ts (build-list (length xs) {λ (_) (Tbinds.var! B)})])
+       {let ([xs (map {λ ([t : Type] [v : Value]) (Tbinds.Value%Ann! B v t)} ts xs)])
+         (Apply (Tbinds.Value%Ann! B f (TypeArrow ts t)) xs)}}]
     [_ (raise 'WIP)]}}
+{: Tbinds.Line! (-> Tbinds Line Line)}
+{define (Tbinds.Line! l) (raise 'WIP)}
 
