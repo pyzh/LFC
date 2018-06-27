@@ -339,8 +339,11 @@
 {define-type Tbinds
   (List (Mutable-HashTable IdU Type) ;值的類型
         (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)) ;確定的struct/union的成員的類型
-        (Boxof (Listof (List Type IdU Type))))} ;不確定的struct/union的成員的類型
+        (Boxof (Listof (List TypeUnknown IdU Type))))} ;不確定的struct/union的成員的類型
 {define TU (TypeUnknown #f)}
+{: Tbinds.usu-add! (-> Tbinds TypeUnknown IdU Type Void)}
+{define (Tbinds.usu-add! B t i f)
+  (set-box! (third B) (cons (list t i f) (unbox (third B))))}
 {: Tbinds.su-add! (-> Tbinds (U TypeStruct TypeUnion) IdU Type Void)}
 {define (Tbinds.su-add! B t i f)
   (hash-update!
@@ -404,10 +407,10 @@
     [(Dot v i)
      {let ([s (Tbinds.var! B)])
        {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeSU) t))] [si {match s [(TypeUnknown (? IdU? i)) i]}])
-         {let ([s (hash-ref (car B) si)])
-           {match s
-             [(or (TypeStruct _) (TypeUnion _)) (Tbinds.su-add! B s i t)]
-             [_ (raise 'WIP)]}}}}]}}
+         {let ([s2 (hash-ref (car B) si)])
+           {match s2
+             [(or (TypeStruct _) (TypeUnion _)) (Tbinds.su-add! B s2 i t)]
+             [_ (Tbinds.usu-add! B s i t)]}}}}]}}
 {: Tbinds.Line! (-> Tbinds Line Line)}
 {define (Tbinds.Line! B l) (raise 'WIP)}
 
