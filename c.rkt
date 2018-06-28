@@ -52,6 +52,8 @@
 {define-type TypePrim (U TypeAny TypeVoid TypeNat8 TypeNat16 TypeNat32 TypeNat64
                          TypeInt8 TypeInt16 TypeInt32 TypeInt64
                          TypeFloat TypeDouble)}
+{define-type TV (U IdU String)}
+{define (TV? x) (or (IdU? x) (string? x))}
 {define-data Type
   (TypeArrow [args : (Maybe (Listof Type))] [result : Type]) ; Maybe=>類型推導
   (TypeIdC [IdC : IdC])
@@ -70,7 +72,7 @@
   (TypeInt64)
   (TypeFloat)
   (TypeDouble)
-  (TypeUnknown [IdU : (Maybe IdU)]) ; 類型推導
+  (TypeTV [TV : (Maybe TV)]) ; 類型推導
   (TypeSU) ; 類型推導
   }
 {define-type Value (U Void Left Apply Value+Line Ann)}
@@ -337,11 +339,11 @@
    (Pairof '! (Pairof CExp (Listof CExp)))
    )}
 {define-type Tbinds
-  (List (Mutable-HashTable IdU Type) ;值的類型
+  (List (Mutable-HashTable TV Type) ;值的類型
         (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)) ;確定的struct/union的成員的類型
-        (Boxof (Listof (List TypeUnknown IdU Type))))} ;不確定的struct/union的成員的類型
-{define TU (TypeUnknown #f)}
-{: Tbinds.usu-add! (-> Tbinds TypeUnknown IdU Type Void)}
+        (Boxof (Listof (List TypeTV IdU Type))))} ;不確定的struct/union的成員的類型
+{define TU (TypeTV #f)}
+{: Tbinds.usu-add! (-> Tbinds TypeTV IdU Type Void)}
 {define (Tbinds.usu-add! B t i f)
   (set-box! (third B) (cons (list t i f) (unbox (third B))))}
 {: Tbinds.su-add! (-> Tbinds (U TypeStruct TypeUnion) IdU Type Void)}
@@ -349,14 +351,14 @@
   (hash-update!
    (hash-ref! (second B) t {λ () {ann (make-hash) (Mutable-HashTable IdU Type)}})
    i {λ ([x : Type]) (Tbinds.unify! B x f)} {λ () TU})}
-{: Tbinds.add! (-> Tbinds IdU Type Void)}
+{: Tbinds.add! (-> Tbinds TV Type Void)}
 {define (Tbinds.add! B i t)
   (hash-update!	(car B) i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () TU})}
 {:  Tbinds.unify! (-> Tbinds Type Type Type)}
 {define (Tbinds.unify! B t1 t2)
   {match t1
-    [(TypeUnknown #f) t2]
-    [(TypeUnknown (? IdU? i))
+    [(TypeTV #f) t2]
+    [(TypeTV (? TV? i))
      (if (hash-has-key? (car B) i)
          (Tbinds.unify! B t2 (hash-ref (car B) i))
          {begin
@@ -364,7 +366,13 @@
            t2})]
     [_
      {match t2
-       [(TypeUnknown _) (Tbinds.unify! B t2 t1)]
+       [(TypeTV #f) t1]
+       [(TypeTV (? TV? i))
+        (if (hash-has-key? (car B) i)
+         (Tbinds.unify! B t1 (hash-ref (car B) i))
+         {begin
+           (Tbinds.add! B i t1)
+           t1})]
        [(TypeSU)
         {match t1
           [(or (TypeStruct _) (TypeUnion _) (TypeSU)) t1]}]
@@ -387,10 +395,10 @@
            {match t2
              [(or (TypeStruct _) (TypeUnion _) (TypeSU)) t2]}]
           [_ (assert (equal? t1 t2)) t1]}]}]}}
-{: Tbinds.var! (-> Tbinds TypeUnknown)}
-{define (Tbinds.var! B) (TypeUnknown (IdC (symbol->string (gensym))))}
+{: Tbinds.var! (-> Tbinds TypeTV)}
+{define (Tbinds.var! B) (TypeTV (symbol->string (gensym)))}
 {: Tbinds.Value! (-> Tbinds Value Value)}
-{define (Tbinds.Value! B v) (Tbinds.Value%Ann! B v (TypeUnknown #f))}
+{define (Tbinds.Value! B v) (Tbinds.Value%Ann! B v (TypeTV #f))}
 {: Tbinds.Value%Ann! (-> Tbinds Value Type Value)}
 {define (Tbinds.Value%Ann! B v t)
   {match v
@@ -405,12 +413,12 @@
        (Tbinds.Value%Ann! B v nt)}]
     [(? void?) (Tbinds.unify! B (TypeVoid) t) v]
     [(Dot v i)
-     {let ([s (Tbinds.var! B)])
-       {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeSU) t))] [si {match s [(TypeUnknown (? IdU? i)) i]}])
-         {let ([s2 (hash-ref (car B) si)])
-           {match s2
-             [(or (TypeStruct _) (TypeUnion _)) (Tbinds.su-add! B s2 i t)]
-             [_ (Tbinds.usu-add! B s i t)]}}}}]}}
+     {let* ([struct-s (symbol->string (gensym))] [struct-type (TypeTV struct-s)])
+       {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeSU) struct-type))])
+         {let ([struct-type2 (hash-ref (car B) struct-s)])
+           {match struct-type2
+             [(or (TypeStruct _) (TypeUnion _)) (Tbinds.su-add! B struct-type2 i t)]
+             [_ (Tbinds.usu-add! B struct-type i t)]}}}}]}}
 {: Tbinds.Line! (-> Tbinds Line Line)}
 {define (Tbinds.Line! B l) (raise 'WIP)}
 
