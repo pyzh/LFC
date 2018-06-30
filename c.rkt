@@ -131,9 +131,9 @@
     {define globals '("")}
     {define mains ""}
     {define-type StructUnion (Pairof (U 'struct 'union) IdU)}
-    {: SUs (Mutable-HashTable StructUnion (Pairof (Listof StructUnion) String))}
+    {: StructUnions (Mutable-HashTable StructUnion (Pairof (Listof StructUnion) String))}
     ; id -> deps / global-line
-    {define SUs (make-hash)}
+    {define StructUnions (make-hash)}
     {: typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; type -> decl / type
     {define typedefs (make-hash)}
 
@@ -215,9 +215,9 @@
     {: DUS (-> (U 'struct 'union) IdU (Listof (Pairof Type IdU)) Void)}
     {define (DUS t idu tis)
       {let ([is (IdU-String idu)] [k (cons t idu)])
-        (assert (not (hash-has-key? SUs k)))
+        (assert (not (hash-has-key? StructUnions k)))
         {hash-set!
-         SUs k
+         StructUnions k
          (cons
           (apply append (map {λ ([x : (Pairof Type IdU)]) (DUS%Type->D (car x))} tis))
           (string-append
@@ -309,13 +309,13 @@
       decls)}
 
 
-    {: SU->G (-> StructUnion (Listof String))}
-    {define (SU->G k)
-      (if (hash-has-key? SUs k)
-          {match (hash-ref SUs k)
-            [(list deps ss) (append (apply append (map SU->G deps)) (list ss))]}
+    {: StructUnion->Globals (-> StructUnion (Listof String))}
+    {define (StructUnion->Globals k)
+      (if (hash-has-key? StructUnions k)
+          {match (hash-ref StructUnions k)
+            [(list deps ss) (append (apply append (map StructUnion->Globals deps)) (list ss))]}
           '())}
-    {set! globals (append (apply append (map SU->G (hash-keys SUs))) globals)}
+    {set! globals (append (apply append (map StructUnion->Globals (hash-keys StructUnions))) globals)}
     
     {: %R (-> (Setof String) (Listof String) (Listof String))}
     {define (%R s xs)
@@ -343,11 +343,11 @@
         (List (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)) ;確定的struct/union的成員的類型
               (Boxof (Listof (List TypeTV IdU Type)))))} ;不確定的struct/union的成員的類型
 {define TU (TypeTV #f)}
-{: Tbinds.usu-add! (-> Tbinds TypeTV IdU Type Void)}
-{define (Tbinds.usu-add! B t i f)
+{: Tbinds.unknown-StructUnion-add! (-> Tbinds TypeTV IdU Type Void)}
+{define (Tbinds.unknown-StructUnion-add! B t i f)
   (set-box! (second (second B)) (cons (list t i f) (unbox (second (second B)))))}
-{: Tbinds.su-add! (-> Tbinds (U TypeStruct TypeUnion) IdU Type Void)}
-{define (Tbinds.su-add! B t i f)
+{: Tbinds.StructUnion-add! (-> Tbinds (U TypeStruct TypeUnion) IdU Type Void)}
+{define (Tbinds.StructUnion-add! B t i f)
   (hash-update!
    (hash-ref! (first (second B)) t {λ () {ann (make-hash) (Mutable-HashTable IdU Type)}})
    i {λ ([x : Type]) (Tbinds.unify! B x f)} {λ () TU})}
@@ -417,8 +417,8 @@
        {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeStrustUnion) struct-type))])
          {let ([struct-type2 (hash-ref (car B) struct-s)])
            {match struct-type2
-             [(or (TypeStruct _) (TypeUnion _)) (Tbinds.su-add! B struct-type2 i t)]
-             [_ (Tbinds.usu-add! B struct-type i t)]}}}}]}}
+             [(or (TypeStruct _) (TypeUnion _)) (Tbinds.StructUnion-add! B struct-type2 i t)]
+             [_ (Tbinds.unknown-StructUnion-add! B struct-type i t)]}}}}]}}
 {: Tbinds.Line! (-> Tbinds Line Line)}
 {define (Tbinds.Line! B l) (raise 'WIP)}
 
