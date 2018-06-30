@@ -73,7 +73,7 @@
   (TypeFloat)
   (TypeDouble)
   (TypeTV [TV : (Maybe TV)]) ; 類型推導
-  (TypeSU) ; 類型推導
+  (TypeStrustUnion) ; 類型推導
   }
 {define-type Value (U Void Left Apply Value+Line Ann)}
 {record Value+Line ([Value : Value] [Line : Line])}
@@ -130,8 +130,8 @@
     {define decls '("")}
     {define globals '("")}
     {define mains ""}
-    {define-type SU (Pairof (U 'struct 'union) IdU)}
-    {: SUs (Mutable-HashTable SU (Pairof (Listof SU) String))}
+    {define-type StructUnion (Pairof (U 'struct 'union) IdU)}
+    {: SUs (Mutable-HashTable StructUnion (Pairof (Listof StructUnion) String))}
     ; id -> deps / global-line
     {define SUs (make-hash)}
     {: typedefs (Mutable-HashTable Type (Pairof (Listof String) String))} ; type -> decl / type
@@ -226,7 +226,7 @@
                   (map {λ ([x : (Pairof Type IdU)])
                          (string-append (Type->type (car x))" "(IdU-String (cdr x))";")} tis))
            "}"is";"))}}}
-    {: DUS%Type->D (-> Type (Listof SU))}
+    {: DUS%Type->D (-> Type (Listof StructUnion))}
     {define DUS%Type->D
       {match-lambda
         [(TypeStruct IdU) (list (cons 'struct IdU))]
@@ -309,7 +309,7 @@
       decls)}
 
 
-    {: SU->G (-> SU (Listof String))}
+    {: SU->G (-> StructUnion (Listof String))}
     {define (SU->G k)
       (if (hash-has-key? SUs k)
           {match (hash-ref SUs k)
@@ -340,16 +340,16 @@
    )}
 {define-type Tbinds
   (List (Mutable-HashTable TV Type) ;值的類型
-        (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)) ;確定的struct/union的成員的類型
-        (Boxof (Listof (List TypeTV IdU Type))))} ;不確定的struct/union的成員的類型
+        (List (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)) ;確定的struct/union的成員的類型
+              (Boxof (Listof (List TypeTV IdU Type)))))} ;不確定的struct/union的成員的類型
 {define TU (TypeTV #f)}
 {: Tbinds.usu-add! (-> Tbinds TypeTV IdU Type Void)}
 {define (Tbinds.usu-add! B t i f)
-  (set-box! (third B) (cons (list t i f) (unbox (third B))))}
+  (set-box! (second (second B)) (cons (list t i f) (unbox (second (second B)))))}
 {: Tbinds.su-add! (-> Tbinds (U TypeStruct TypeUnion) IdU Type Void)}
 {define (Tbinds.su-add! B t i f)
   (hash-update!
-   (hash-ref! (second B) t {λ () {ann (make-hash) (Mutable-HashTable IdU Type)}})
+   (hash-ref! (first (second B)) t {λ () {ann (make-hash) (Mutable-HashTable IdU Type)}})
    i {λ ([x : Type]) (Tbinds.unify! B x f)} {λ () TU})}
 {: Tbinds.add! (-> Tbinds TV Type Void)}
 {define (Tbinds.add! B i t)
@@ -369,13 +369,13 @@
        [(TypeTV #f) t1]
        [(TypeTV (? TV? i))
         (if (hash-has-key? (car B) i)
-         (Tbinds.unify! B t1 (hash-ref (car B) i))
-         {begin
-           (Tbinds.add! B i t1)
-           t1})]
-       [(TypeSU)
+            (Tbinds.unify! B t1 (hash-ref (car B) i))
+            {begin
+              (Tbinds.add! B i t1)
+              t1})]
+       [(TypeStrustUnion)
         {match t1
-          [(or (TypeStruct _) (TypeUnion _) (TypeSU)) t1]}]
+          [(or (TypeStruct _) (TypeUnion _) (TypeStrustUnion)) t1]}]
        [_
         {match t1
           [(TypeArrow args result)
@@ -391,9 +391,9 @@
            {match t2
              [(TypeRef r)
               (TypeRef (Tbinds.unify! B a r))]}]
-          [(TypeSU)
+          [(TypeStrustUnion)
            {match t2
-             [(or (TypeStruct _) (TypeUnion _) (TypeSU)) t2]}]
+             [(or (TypeStruct _) (TypeUnion _) (TypeStrustUnion)) t2]}]
           [_ (assert (equal? t1 t2)) t1]}]}]}}
 {: Tbinds.var! (-> Tbinds TypeTV)}
 {define (Tbinds.var! B) (TypeTV (symbol->string (gensym)))}
@@ -414,7 +414,7 @@
     [(? void?) (Tbinds.unify! B (TypeVoid) t) v]
     [(Dot v i)
      {let* ([struct-s (symbol->string (gensym))] [struct-type (TypeTV struct-s)])
-       {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeSU) struct-type))])
+       {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeStrustUnion) struct-type))])
          {let ([struct-type2 (hash-ref (car B) struct-s)])
            {match struct-type2
              [(or (TypeStruct _) (TypeUnion _)) (Tbinds.su-add! B struct-type2 i t)]
