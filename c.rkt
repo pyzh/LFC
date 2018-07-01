@@ -48,7 +48,6 @@
   (DefFunc [IdU : IdU] [Func : Func])
   (DefUnion [IdU : IdU] [List : (Listof (Pairof Type IdU))])
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
-{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])}
 {define-type TypePrim (U TypeAny TypeVoid TypeNat8 TypeNat16 TypeNat32 TypeNat64
                          TypeInt8 TypeInt16 TypeInt32 TypeInt64
                          TypeFloat TypeDouble)}
@@ -59,6 +58,7 @@
   (TypeIdC [IdC : IdC])
   (TypeStruct [IdU : IdU])
   (TypeUnion [IdU : IdU])
+  (TypeEnum [IdU : IdU])
   (TypeRef [Type : Type])
   (TypeAny)
   (TypeVoid)
@@ -75,11 +75,12 @@
   (TypeTV [TV : (Maybe TV)]) ; 類型推導
   (TypeStrustUnion) ; 類型推導
   }
-{define-type Value (U Void Left Apply Value+Line Ann)}
+{define-type Value (U Void Left Apply Value+Line Ann Func)}
 {record Value+Line ([Value : Value] [Line : Line])}
 {define-type Left (U IdU Dot (Pairof Left Line))}
 {record Dot ([Value : Value] [IdU : IdU])}
 {record Ann ([Value : Value] [Type : Type])} ; 類型推導
+{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])}
 
 {define c 0}
 {define (gen-lfc-str)
@@ -266,6 +267,9 @@
            [(TypeUnion IdU)
             {let ([s (string-append "union "(IdU-String IdU))])
               (cons (list (string-append s";")) s)}]
+           [(TypeEnum IdU)
+            {let ([s (string-append "enum "(IdU-String IdU))])
+              (cons (list (string-append s";")) s)}]
            [(TypeArrow (? list? args) result)
             {let ([args (map %Type->type args)] [result (%Type->type result)] [s (gen-lfc-str)])
               (cons
@@ -420,5 +424,19 @@
              [(or (TypeStruct _) (TypeUnion _)) (Tbinds.StructUnion-add! B struct-type2 i t)]
              [_ (Tbinds.unknown-StructUnion-add! B struct-type i t)]}}}}]}}
 {: Tbinds.Line! (-> Tbinds Line Line)}
-{define (Tbinds.Line! B l) (raise 'WIP)}
-
+{define (Tbinds.Line! B l)
+  {match l
+    [(LineNothing) l]
+    [(Apply f xs) (Apply (Tbinds.Value! B f) (map {λ ([x : Value]) (Tbinds.Value! B x)} xs))]
+    [(If v t f) (If (Tbinds.Value! B v) (Tbinds.Line! B t) (Tbinds.Line! B f))]
+    [(While v l) (While (Tbinds.Value! B v) (Tbinds.Line! B l))]
+    [(Line2 x y) (Line2 (Tbinds.Line! B x) (Tbinds.Line! B y))]
+    [(DefVar i t v) (Tbinds.add! i t) (DefVar i TU (Tbinds.Value! B v))]
+    [(DefVarGlobal i t v) (Tbinds.add! i t) (DefVarGlobal i TU (Tbinds.Value! B v))]
+    [(Set! l v) (Set! {cast (Tbinds.Value! B l) Left} (Tbinds.Value! B v))]
+    [(DefEnum i xs) (raise 'WIP)]
+    [(DefFunc i f) (raise 'WIP)]
+    [(DefUnion i xs) (raise 'WIP)]
+    [(DefStruct i xs) (raise 'WIP)]}}
+{: type-end-line! (-> Any Line Line)};Any=>WIP
+{define (type-end-line! M l) (raise 'WIP)}
