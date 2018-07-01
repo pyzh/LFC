@@ -51,8 +51,8 @@
 {define-type TypePrim (U TypeAny TypeVoid TypeNat8 TypeNat16 TypeNat32 TypeNat64
                          TypeInt8 TypeInt16 TypeInt32 TypeInt64
                          TypeFloat TypeDouble)}
-{define-type TV (U IdU String)}
-{define (TV? x) (or (IdU? x) (string? x))}
+{define-type TypeVar (U IdU String)}
+{define (TypeVar? x) (or (IdU? x) (string? x))}
 {define-data Type
   (TypeArrow [args : (Maybe (Listof Type))] [result : Type]) ; Maybe=>類型推導
   (TypeIdC [IdC : IdC])
@@ -72,7 +72,7 @@
   (TypeInt64)
   (TypeFloat)
   (TypeDouble)
-  (TypeTV [TV : (Maybe TV)]) ; 類型推導
+  (TypeTypeVar [TypeVar : (Maybe TypeVar)]) ; 類型推導
   (TypeStrustUnion) ; 類型推導
   }
 {define-type Value (U Void Left Apply Value+Line Ann Func)}
@@ -343,11 +343,11 @@
    (Pairof '! (Pairof CExp (Listof CExp)))
    )}
 {define-type Tbinds
-  (List (Mutable-HashTable TV Type) ;值的類型
+  (List (Mutable-HashTable TypeVar Type) ;值的類型
         (List (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)) ;確定的struct/union的成員的類型
-              (Boxof (Listof (List TypeTV IdU Type)))))} ;不確定的struct/union的成員的類型
-{define TU (TypeTV #f)}
-{: Tbinds.unknown-StructUnion-add! (-> Tbinds TypeTV IdU Type Void)}
+              (Boxof (Listof (List TypeTypeVar IdU Type)))))} ;不確定的struct/union的成員的類型
+{define TU (TypeTypeVar #f)}
+{: Tbinds.unknown-StructUnion-add! (-> Tbinds TypeTypeVar IdU Type Void)}
 {define (Tbinds.unknown-StructUnion-add! B t i f)
   (set-box! (second (second B)) (cons (list t i f) (unbox (second (second B)))))}
 {: Tbinds.StructUnion-add! (-> Tbinds (U TypeStruct TypeUnion) IdU Type Void)}
@@ -355,14 +355,14 @@
   (hash-update!
    (hash-ref! (first (second B)) t {λ () {ann (make-hash) (Mutable-HashTable IdU Type)}})
    i {λ ([x : Type]) (Tbinds.unify! B x f)} {λ () TU})}
-{: Tbinds.add! (-> Tbinds TV Type Void)}
+{: Tbinds.add! (-> Tbinds TypeVar Type Void)}
 {define (Tbinds.add! B i t)
   (hash-update!	(car B) i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () TU})}
 {:  Tbinds.unify! (-> Tbinds Type Type Type)}
 {define (Tbinds.unify! B t1 t2)
   {match t1
-    [(TypeTV #f) t2]
-    [(TypeTV (? TV? i))
+    [(TypeTypeVar #f) t2]
+    [(TypeTypeVar (? TypeVar? i))
      (if (hash-has-key? (car B) i)
          (Tbinds.unify! B t2 (hash-ref (car B) i))
          {begin
@@ -370,8 +370,8 @@
            t2})]
     [_
      {match t2
-       [(TypeTV #f) t1]
-       [(TypeTV (? TV? i))
+       [(TypeTypeVar #f) t1]
+       [(TypeTypeVar (? TypeVar? i))
         (if (hash-has-key? (car B) i)
             (Tbinds.unify! B t1 (hash-ref (car B) i))
             {begin
@@ -399,10 +399,10 @@
            {match t2
              [(or (TypeStruct _) (TypeUnion _) (TypeStrustUnion)) t2]}]
           [_ (assert (equal? t1 t2)) t1]}]}]}}
-{: Tbinds.var! (-> Tbinds TypeTV)}
-{define (Tbinds.var! B) (TypeTV (symbol->string (gensym)))}
+{: Tbinds.var! (-> Tbinds TypeTypeVar)}
+{define (Tbinds.var! B) (TypeTypeVar (symbol->string (gensym)))}
 {: Tbinds.Value! (-> Tbinds Value Value)}
-{define (Tbinds.Value! B v) (Tbinds.Value%Ann! B v (TypeTV #f))}
+{define (Tbinds.Value! B v) (Tbinds.Value%Ann! B v (TypeTypeVar #f))}
 {: Tbinds.Value%Ann! (-> Tbinds Value Type Value)}
 {define (Tbinds.Value%Ann! B v t)
   {match v
@@ -417,7 +417,7 @@
        (Tbinds.Value%Ann! B v nt)}]
     [(? void?) (Tbinds.unify! B (TypeVoid) t) v]
     [(Dot v i)
-     {let* ([struct-s (symbol->string (gensym))] [struct-type (TypeTV struct-s)])
+     {let* ([struct-s (symbol->string (gensym))] [struct-type (TypeTypeVar struct-s)])
        {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeStrustUnion) struct-type))])
          {let ([struct-type2 (hash-ref (car B) struct-s)])
            {match struct-type2
