@@ -48,9 +48,6 @@
   (DefFunc [IdU : IdU] [Func : Func])
   (DefUnion [IdU : IdU] [List : (Listof (Pairof Type IdU))])
   (DefStruct [IdU : IdU] [List : (Listof (Pairof Type IdU))])}
-{define-type TypePrim (U TypeAny TypeVoid TypeNat8 TypeNat16 TypeNat32 TypeNat64
-                         TypeInt8 TypeInt16 TypeInt32 TypeInt64
-                         TypeFloat TypeDouble)}
 {define-type TypeVar (U IdU String)}
 {define (TypeVar? x) (or (IdU? x) (string? x))}
 {define-type TypeSimple {Refine [t : Type] (not (or (: t TypeTypeVar) (: t TypeStructUnion) (: t TypeU)))}} ; 非嚴謹
@@ -371,7 +368,6 @@
               (Boxof (Listof (List TypeTypeVar IdU Type))) ;不確定的struct/union的成員的類型
               (Mutable-HashTable (U TypeStruct TypeUnion) (Listof IdU)) ;聲名
               ))}
-{define TU (TypeTypeVar #f)}
 {: Tbinds.unknown-StructUnion-add! (-> Tbinds TypeTypeVar IdU Type Void)}
 {define (Tbinds.unknown-StructUnion-add! B t i f)
   (set-box! (second (second B)) (cons (list t i f) (unbox (second (second B)))))}
@@ -384,25 +380,34 @@
 {define (Tbinds.StructUnion! B i xs)
   (assert (not (hash-has-key? (third (second B)) i)))
   (hash-set! (third (second B)) i xs)}
-{: Tbinds.add! (-> Tbinds TypeVar Type Void)}
+{: Tbinds.add! (-> Tbinds TypeVar Type Type)}
+{define TU (TypeTypeVar #f)}
 {define (Tbinds.add! B i t)
-  (hash-update!	(car B) i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () TU})}
+  (hash-update!	(car B) i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () TU})
+  (hash-ref (car B) i)}
 {:  Tbinds.unify! (-> Tbinds Type Type Type)}
 {define (Tbinds.unify! B t1 t2)
   {match t1
     [(TypeTypeVar #f) t2]
-    [(TypeTypeVar (? TypeVar? i))
-     (if (hash-has-key? (car B) i)
-         (Tbinds.unify! B t2 (hash-ref (car B) i))
-         {begin
-           (Tbinds.add! B i t2)
-           t2})]
+    [(TypeTypeVar (? TypeVar? i)) (Tbinds.add! B i t2)]
     [(TypeU s1)
      {match t2
+       [(TypeTypeVar #f) t1]
+       [(TypeTypeVar (? TypeVar? i)) (Tbinds.add! B i t1)]
        [(TypeU s2)
         {let ([s (set-intersect s1 s2)])
           (assert (not (set-empty? s)))
           (TypeU s)}]
+       [(TypeStructUnion)
+        {: i (U True TypeStruct TypeUnion)}
+        {define i #t}
+        {for ([t (set->list s1)])
+          {match t
+            [(or (TypeStruct _) (TypeUnion _))
+             (assert i)
+             {set! i t}]
+            [_ (void)]}}
+        {cast i Type}]
        [_ (assert (set-member? s1 t2)) t2]}]
     [_
      {match t2
@@ -443,8 +448,8 @@
 {: Tbinds.Value%Ann! (-> Tbinds Value Type Value)}
 {define (Tbinds.Value%Ann! B v t)
   {match v
-    [(? ValueSimple?) (raise 'WIP)]
-    [(? IdU?) (Tbinds.add! B v t)]
+    [(? ValueSimple?) (Tbinds.Value%Ann%Simple! B v t)]
+    [(? IdU?) (Tbinds.add! B v t) v]
     [(Apply f xs)
      {let ([ts (build-list (length xs) {λ (_) (Tbinds.var! B)})])
        {let ([xs (map {λ ([t : Type] [v : Value]) (Tbinds.Value%Ann! B v t)} ts xs)])
@@ -461,6 +466,22 @@
            {match struct-type2
              [(or (TypeStruct _) (TypeUnion _)) (Tbinds.StructUnion-add! B struct-type2 i t)]
              [_ (Tbinds.unknown-StructUnion-add! B struct-type i t)]}}}}]}}
+{: Tbinds.Value%Ann%Simple! (-> Tbinds ValueSimple Type ValueSimple)}
+{define TFB (TypeU (set (TypeFloat) (TypeDouble)))}
+{define TN (TypeU (set(TypeNat8) (TypeNat16) (TypeNat32) (TypeNat64)
+                      (TypeInt8) (TypeInt16) (TypeInt32) (TypeInt64)))}
+{define TI (TypeU (set (TypeInt8) (TypeInt16) (TypeInt32) (TypeInt64)))}
+{define TC (TypeU (set (TypeNat8) (TypeInt8)))}
+{define TS (TypeU (set (TypeRef (TypeNat8)) (TypeRef (TypeInt8))))}
+{define (Tbinds.Value%Ann%Simple! B v t)
+  (Tbinds.unify!
+   B t
+   {match v
+     [(ValueRational _) TFB]
+     [(ValueInteger i) (if (natural? i) TN TI)]
+     [(ValueChar _) TC]
+     [(ValueString _) TS]})
+  v}
 {: Tbinds.Line! (-> Tbinds Line Line)}
 {define (Tbinds.Line! B l)
   {match l
