@@ -345,7 +345,9 @@
 {define-type Tbinds
   (List (Mutable-HashTable TypeVar Type) ;值的類型
         (List (Mutable-HashTable (U TypeStruct TypeUnion) (Mutable-HashTable IdU Type)) ;確定的struct/union的成員的類型
-              (Boxof (Listof (List TypeTypeVar IdU Type)))))} ;不確定的struct/union的成員的類型
+              (Boxof (Listof (List TypeTypeVar IdU Type))) ;不確定的struct/union的成員的類型
+              (Mutable-HashTable (U TypeStruct TypeUnion) (Listof IdU)) ;聲名
+              ))}
 {define TU (TypeTypeVar #f)}
 {: Tbinds.unknown-StructUnion-add! (-> Tbinds TypeTypeVar IdU Type Void)}
 {define (Tbinds.unknown-StructUnion-add! B t i f)
@@ -355,6 +357,10 @@
   (hash-update!
    (hash-ref! (first (second B)) t {λ () {ann (make-hash) (Mutable-HashTable IdU Type)}})
    i {λ ([x : Type]) (Tbinds.unify! B x f)} {λ () TU})}
+{: Tbinds.StructUnion! (-> Tbinds (U TypeStruct TypeUnion) (Listof IdU) Void)}
+{define (Tbinds.StructUnion! B i xs)
+  (assert (not (hash-has-key? (third (second B)) i)))
+  (hash-set! (third (second B)) i xs)}
 {: Tbinds.add! (-> Tbinds TypeVar Type Void)}
 {define (Tbinds.add! B i t)
   (hash-update!	(car B) i {λ ([x : Type]) (Tbinds.unify! B x t)} {λ () TU})}
@@ -439,7 +445,14 @@
        (Tbinds.add! B (cdr x) (TypeEnum i))}
      l]
     [(DefFunc i f) (raise 'WIP)]
-    [(DefUnion i xs) (raise 'WIP)]
-    [(DefStruct i xs) (raise 'WIP)]}}
+    [(DefUnion i xs)
+     {for ([x xs])
+       (Tbinds.StructUnion-add! B (TypeUnion i) (cdr x) (car x))}
+     (Tbinds.StructUnion! B (TypeUnion i) (map {ann cdr (-> (Pairof Type IdU) IdU)} xs))
+     l]
+    [(DefStruct i xs) {for ([x xs])
+                        (Tbinds.StructUnion-add! B (TypeStruct i) (cdr x) (car x))}
+                      (Tbinds.StructUnion! B (TypeStruct i) (map {ann cdr (-> (Pairof Type IdU) IdU)} xs))
+                      l]}}
 {: type-end-line! (-> Any Line Line)};Any=>WIP
 {define (type-end-line! M l) (raise 'WIP)}
