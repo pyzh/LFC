@@ -80,7 +80,7 @@
 {define-type Left (U IdU Dot (Pairof Left Line))}
 {record Dot ([Value : Value] [IdU : IdU])}
 {record Ann ([Value : Value] [Type : Type])} ; 類型推導
-{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])}
+{struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Value : Value])}
 
 {define c 0}
 {define (gen-lfc-str)
@@ -198,17 +198,17 @@
            [((list ds ls _) (list ds2 ls2 #f)) (list (string-append ds ds2) (string-append ls ls2))]
            [((list ds ls (? string? l)) (list ds2 ls2 (? string? v)))
             (list (string-append ds ds2) (string-append ls ls2 l"="v";"))]}]
-        [(DefFunc id f);([args : (Listof (Pairof Type Id))] [result : Type] [Line : Line])
+        [(DefFunc id f)
          {match f
-           [(Func args result line)
-            {match (Line->localdecls-locals line)
-              [(list ds ls)
+           [(Func args result value)
+            {match (Value->localdecls-locals-value value)
+              [(list ds ls v)
                {let ([h
                       (string-append
                        (Type->type result)" "(IdU-String id)
                        "("(string-add-between
                            (map {λ ([x : (Pairof Type Id)]) (string-append (Type->type (car x))" "(Id-String (cdr x)))} args) ",")")")])
-                 {add-tail! globals (string-append h"{"ds ls"}")}
+                 {add-tail! globals (string-append h"{"ds ls"return"(if (false? v) "" (string-append " "v))";}")}
                  {add-tail! decls (string-append h";")}}]}]}
          (list "" "")]
         [(DefUnion id tis) (DUS 'union id tis) (list "" "")]
@@ -444,7 +444,12 @@
      {for ([x xs])
        (Tbinds.add! B (cdr x) (TypeEnum i))}
      l]
-    [(DefFunc i f) (raise 'WIP)]
+    [(DefFunc i f)
+     {match f
+       [(Func args result v)
+        {for ([arg args])
+          (Tbinds.add! B (cdr arg) (car arg))}
+        (DefFunc i (Func args result (Tbinds.Value%Ann! B v result)))]}]
     [(DefUnion i xs)
      {for ([x xs])
        (Tbinds.StructUnion-add! B (TypeUnion i) (cdr x) (car x))}
