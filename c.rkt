@@ -53,6 +53,7 @@
                          TypeFloat TypeDouble)}
 {define-type TypeVar (U IdU String)}
 {define (TypeVar? x) (or (IdU? x) (string? x))}
+{define-type TypeSimple {Refine [t : Type] (not (or (: t TypeTypeVar) (: t TypeStructUnion) (: t TypeU)))}}
 {define-data Type
   (TypeArrow [args : (Maybe (Listof Type))] [result : Type]) ; Maybe=>類型推導
   (TypeIdC [IdC : IdC])
@@ -73,14 +74,21 @@
   (TypeFloat)
   (TypeDouble)
   (TypeTypeVar [TypeVar : (Maybe TypeVar)]) ; 類型推導
-  (TypeStrustUnion) ; 類型推導
+  (TypeStructUnion) ; 類型推導
+  (TypeU [Set : (Setof TypeSimple)]) ; 類型推導
   }
-{define-type Value (U Void Left Apply Value+Line Ann Func)}
+{define-type Value (U Void Left Apply Value+Line Ann Func ValueSimple)}
 {record Value+Line ([Value : Value] [Line : Line])}
 {define-type Left (U IdU Dot (Pairof Left Line))}
 {record Dot ([Value : Value] [IdU : IdU])}
 {record Ann ([Value : Value] [Type : Type])} ; 類型推導
 {struct Func ([args : (Listof (Pairof Type Id))] [result : Type] [Value : Value])}
+{define-data ValueSimple
+  (ValueRational [Rational : Exact-Rational])
+  (ValueInteger [Integer : Integer])
+  (ValueChar [Char : Char])
+  (ValueString [String : String])}
+{define (ValueSimple? x) (or (ValueRational? x) (ValueInteger? x) (ValueChar? x) (ValueString? x))}
 
 {define c 0}
 {define (gen-lfc-str)
@@ -236,6 +244,7 @@
     {: Value->localdecls-locals-value (-> Value (List String String (Maybe String)))}
     {define (Value->localdecls-locals-value v)
       {match v
+        [(? ValueSimple?) (list "" "" (ValueSimple->value v))]
         [(? void?) (list "" "" #f)]
         [(? IdU? v) (list "" "" (IdU-String v))]
         [(Dot Value IdU)
@@ -253,6 +262,19 @@
                  (string-append "("{cast (third f) String}")("
                                 (string-add-between {cast (map {ann third (-> (List String String (Maybe String)) (Maybe String))} xs) (Listof String)}
                                                     ",")")"))}]}}
+    {: ValueSimple->value (-> ValueSimple String)}
+    {define ValueSimple->value
+      {match-lambda
+        [(ValueRational n) (number->string n)] ; bugs
+        [(ValueInteger n) (number->string n)] ; bugs
+        [(ValueChar c) 
+         {define p (open-output-string)}
+         (write (string c) p)
+         (string-append "'" (get-output-string p) "'")]
+        [(ValueString s)
+         {define p (open-output-string)}
+         (write s p)
+         (string-append "\"" (get-output-string p) "\"")]}}
     {: Type->type (-> Type String)}
     {define (Type->type t) (cdr (%Type->type t))}
     {: %Type->type (-> Type (Pairof (Listof String) String))}
@@ -374,8 +396,16 @@
          {begin
            (Tbinds.add! B i t2)
            t2})]
+    [(TypeU s1)
+     {match t2
+       [(TypeU s2)
+        {let ([s (set-intersect s1 s2)])
+          (assert (not (set-empty? s)))
+          (TypeU s)}]
+       [_ (assert (set-member? s1 t2)) t2]}]
     [_
      {match t2
+       [(TypeU _) (Tbinds.unify! B t2 t1)]
        [(TypeTypeVar #f) t1]
        [(TypeTypeVar (? TypeVar? i))
         (if (hash-has-key? (car B) i)
@@ -383,9 +413,9 @@
             {begin
               (Tbinds.add! B i t1)
               t1})]
-       [(TypeStrustUnion)
+       [(TypeStructUnion)
         {match t1
-          [(or (TypeStruct _) (TypeUnion _) (TypeStrustUnion)) t1]}]
+          [(or (TypeStruct _) (TypeUnion _) (TypeStructUnion)) t1]}]
        [_
         {match t1
           [(TypeArrow args result)
@@ -401,9 +431,9 @@
            {match t2
              [(TypeRef r)
               (TypeRef (Tbinds.unify! B a r))]}]
-          [(TypeStrustUnion)
+          [(TypeStructUnion)
            {match t2
-             [(or (TypeStruct _) (TypeUnion _) (TypeStrustUnion)) t2]}]
+             [(or (TypeStruct _) (TypeUnion _) (TypeStructUnion)) t2]}]
           [_ (assert (equal? t1 t2)) t1]}]}]}}
 {: Tbinds.var! (-> Tbinds TypeTypeVar)}
 {define (Tbinds.var! B) (TypeTypeVar (symbol->string (gensym)))}
@@ -412,6 +442,7 @@
 {: Tbinds.Value%Ann! (-> Tbinds Value Type Value)}
 {define (Tbinds.Value%Ann! B v t)
   {match v
+    [(? ValueSimple?) (raise 'WIP)]
     [(? IdU?) (Tbinds.add! B v t)]
     [(Apply f xs)
      {let ([ts (build-list (length xs) {λ (_) (Tbinds.var! B)})])
@@ -424,7 +455,7 @@
     [(? void?) (Tbinds.unify! B (TypeVoid) t) v]
     [(Dot v i)
      {let* ([struct-s (symbol->string (gensym))] [struct-type (TypeTypeVar struct-s)])
-       {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeStrustUnion) struct-type))])
+       {let ([v (Tbinds.Value%Ann! B v (Tbinds.unify! B (TypeStructUnion) struct-type))])
          {let ([struct-type2 (hash-ref (car B) struct-s)])
            {match struct-type2
              [(or (TypeStruct _) (TypeUnion _)) (Tbinds.StructUnion-add! B struct-type2 i t)]
