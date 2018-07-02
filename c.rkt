@@ -508,9 +508,10 @@
        (Tbinds.StructUnion-add! B (TypeUnion i) (cdr x) (car x))}
      (Tbinds.StructUnion! B (TypeUnion i) (map {ann cdr (-> (Pairof Type IdU) IdU)} xs))
      l]
-    [(DefStruct i xs) {for ([x xs])
-                        (Tbinds.StructUnion-add! B (TypeStruct i) (cdr x) (car x))}
-                      (Tbinds.StructUnion! B (TypeStruct i) (map {ann cdr (-> (Pairof Type IdU) IdU)} xs))
-                      l]}}
+    [(DefStruct i xs)
+     {for ([x xs])
+       (Tbinds.StructUnion-add! B (TypeStruct i) (cdr x) (car x))}
+     (Tbinds.StructUnion! B (TypeStruct i) (map {ann cdr (-> (Pairof Type IdU) IdU)} xs))
+     l]}}
 {: type-end-line! (-> Any Line Line)};Any=>WIP
 {define (type-end-line! M l) (raise 'WIP)}
