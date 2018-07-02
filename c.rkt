@@ -53,7 +53,7 @@
                          TypeFloat TypeDouble)}
 {define-type TypeVar (U IdU String)}
 {define (TypeVar? x) (or (IdU? x) (string? x))}
-{define-type TypeSimple {Refine [t : Type] (not (or (: t TypeTypeVar) (: t TypeStructUnion) (: t TypeU)))}}
+{define-type TypeSimple {Refine [t : Type] (not (or (: t TypeTypeVar) (: t TypeStructUnion) (: t TypeU)))}} ; 非嚴謹
 {define-data Type
   (TypeArrow [args : (Maybe (Listof Type))] [result : Type]) ; Maybe=>類型推導
   (TypeIdC [IdC : IdC])
@@ -135,6 +135,7 @@
 {define (compile _L_)
   {with-new-LFC-ID
       '||
+    ;此處Type=>TypeSimple
     {define heads '("")}
     {define decls '("")}
     {define globals '("")}
