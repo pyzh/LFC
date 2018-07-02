@@ -434,7 +434,10 @@
     [(DefVar i t v) (Tbinds.add! B i t) (DefVar i TU (Tbinds.Value! B v))]
     [(DefVarGlobal i t v) (Tbinds.add! B i t) (DefVarGlobal i TU (Tbinds.Value! B v))]
     [(Set! l v) (Set! {cast (Tbinds.Value! B l) Left} (Tbinds.Value! B v))]
-    [(DefEnum i xs) (raise 'WIP)]
+    [(DefEnum i xs)
+     {for ([x xs])
+       (Tbinds.add! B (cdr x) (TypeEnum i))}
+     l]
     [(DefFunc i f) (raise 'WIP)]
     [(DefUnion i xs) (raise 'WIP)]
     [(DefStruct i xs) (raise 'WIP)]}}
